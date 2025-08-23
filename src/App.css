@@ -1,37 +1,42 @@
+/* Root container with glassmorphism and modern gradient */
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2.5rem;
+  padding: 2rem;
   text-align: center;
-  background: linear-gradient(135deg, #1E3A8A 0%, #10B981 100%); /* Deep indigo to emerald */
-  border-radius: 1.75rem;
-  box-shadow: 0 8px 40px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  transition: background 0.5s ease;
+  background: linear-gradient(145deg, rgba(17, 24, 39, 0.9) 0%, rgba(6, 182, 212, 0.7) 100%);
+  backdrop-filter: blur(12px);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.2), inset 0 0 8px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #root:hover {
-  background: linear-gradient(135deg, #1E40AF 0%, #14B8A6 100%); /* Slight shift for interactivity */
+  background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(8, 145, 178, 0.8) 100%);
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.25);
 }
 
+/* Logo styling with subtle animations */
 .logo {
-  height: 6.5em;
-  padding: 1.75em;
-  will-change: filter, transform;
-  transition: filter 400ms ease, transform 400ms ease;
+  height: 6em;
+  padding: 1.5em;
+  will-change: transform, filter;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 80%);
 }
 
 .logo:hover {
-  filter: drop-shadow(0 0 2.5em #D1D5DB) glow(0 0 10px #FBBF24); /* Soft white glow with gold accent */
-  transform: scale(1.1) translateY(-5px);
+  transform: scale(1.05) translateY(-4px);
+  filter: drop-shadow(0 0 1.5em rgba(147, 197, 253, 0.5));
 }
 
 .logo.react:hover {
-  filter: drop-shadow(0 0 2.5em #34D399) glow(0 0 10px #FBBF24); /* Emerald glow with gold */
-  transform: rotate(8deg) scale(1.1) translateY(-5px);
+  filter: drop-shadow(0 0 1.5em rgba(34, 197, 115, 0.5));
+  transform: scale(1.05) translateY(-4px) rotate(5deg);
 }
 
+/* Logo spin animation */
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
@@ -43,17 +48,20 @@
 
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 25s linear;
+    animation: logo-spin infinite 30s linear;
   }
 }
 
+/* Card styling with glassmorphism and hover effects */
 .card {
-  padding: 2.5em;
-  border-radius: 1.5rem;
-  background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%); /* Blue to emerald gradient */
-  color: #F3F4F6; /* Light gray for readability */
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3), inset 0 0 8px rgba(255, 255, 255, 0.15);
-  transition: transform 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
+  padding: 2em;
+  border-radius: 1.25rem;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #F3F4F6;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
@@ -65,9 +73,9 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 80%);
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.3s ease;
 }
 
 .card:hover::before {
@@ -75,15 +83,17 @@
 }
 
 .card:hover {
-  transform: translateY(-8px) scale(1.03);
-  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.5), inset 0 0 12px rgba(255, 255, 255, 0.2);
-  background: linear-gradient(90deg, #2563EB 0%, #059669 100%); /* Slightly darker on hover */
+  transform: translateY(-6px);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%);
 }
 
+/* Link styling with modern hover effects */
 .read-the-docs {
-  color: #60A5FA; /* Soft blue for links */
+  color: #93C5FD;
   text-decoration: none;
   position: relative;
+  font-weight: 500;
   transition: color 0.3s ease;
 }
 
@@ -92,20 +102,21 @@
   position: absolute;
   width: 0;
   height: 2px;
-  bottom: -2px;
+  bottom: -3px;
   left: 0;
-  background-color: #FBBF24; /* Gold underline */
-  transition: width 0.3s ease;
+  background-color: #FCD34D;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .read-the-docs:hover {
-  color: #FBBF24; /* Gold on hover */
+  color: #FCD34D;
 }
 
 .read-the-docs:hover::after {
   width: 100%;
 }
 
+/* Hide scrollbar for modern look */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -115,29 +126,39 @@
   scrollbar-width: none;
 }
 
-/* Custom glow effect for browsers that support it */
-@supports (filter: drop-shadow(0 0 2.5em #D1D5DB)) {
-  .logo, .logo.react {
-    filter: drop-shadow(0 0 1em #D1D5DB);
-  }
-}
-
-/* Focus styles for accessibility */
+/* Enhanced focus styles for accessibility */
 .card:focus-within,
 .logo:focus {
-  outline: 3px solid #FBBF24;
-  outline-offset: 4px;
+  outline: 3px solid #FCD34D;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(252, 211, 77, 0.3);
 }
 
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   #root {
-    background: linear-gradient(135deg, #1E3A8A 0%, #047857 100%); /* Darker tones */
+    background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(6, 182, 212, 0.75) 100%);
   }
   .card {
-    background: linear-gradient(90deg, #1E40AF 0%, #047857 100%);
+    background: linear-gradient(90deg, rgba(30, 64, 175, 0.15) 0%, rgba(4, 120, 87, 0.15) 100%);
   }
   .card:hover {
-    background: linear-gradient(90deg, #1E3A8A 0%, #059669 100%);
+    background: linear-gradient(90deg, rgba(30, 64, 175, 0.2) 0%, rgba(4, 120, 87, 0.2) 100%);
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  #root {
+    padding: 1.5rem;
+    border-radius: 1rem;
+  }
+  .card {
+    padding: 1.5rem;
+    border-radius: 1rem;
+  }
+  .logo {
+    height: 5em;
+    padding: 1em;
   }
 }

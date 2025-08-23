@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, User, Lock } from "lucide-react";
+import { Shield, User, Lock, Mail } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const Auth = () => {
@@ -22,12 +18,10 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Clean up any existing auth state
     const checkExistingSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          // Check if user profile exists and is active
           const { data: profile } = await supabase
             .from('profiles')
             .select('*')
@@ -35,7 +29,6 @@ const Auth = () => {
             .single();
           
           if (profile && profile.status === 'active') {
-            // Check if password change is required
             const userMetadata = session.user.user_metadata;
             if (userMetadata?.temp_password || userMetadata?.requires_password_change || userMetadata?.password_set_by_admin) {
               setIsFirstLogin(true);
@@ -59,7 +52,6 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         try {
-          // Check user profile and status
           const { data: profile } = await supabase
             .from('profiles')
             .select('*')
@@ -68,7 +60,6 @@ const Auth = () => {
           
           if (profile) {
             if (profile.status === 'active') {
-              // Check if this is first login or admin-set password
               const userMetadata = session.user.user_metadata;
               if (userMetadata?.temp_password || userMetadata?.requires_password_change || userMetadata?.password_set_by_admin) {
                 setIsFirstLogin(true);
@@ -100,7 +91,7 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -122,10 +113,10 @@ const Auth = () => {
           toast({
             title: "Success",
             description: "Logged in successfully",
+            className: "bg-green-500/90 text-white",
           });
         }
       } else {
-        // Disable email confirmation for immediate login
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -143,6 +134,7 @@ const Auth = () => {
           toast({
             title: "Account Created",
             description: "Your account has been created successfully. You can now log in immediately.",
+            className: "bg-green-500/90 text-white",
           });
           setIsLogin(true);
           setPassword('');
@@ -155,7 +147,7 @@ const Auth = () => {
     }
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
+  const handlePasswordReset = async (e) => {
     e.preventDefault();
     
     if (newPassword !== confirmPassword) {
@@ -187,6 +179,7 @@ const Auth = () => {
         toast({
           title: "Password Updated",
           description: "Your password has been updated successfully",
+          className: "bg-green-500/90 text-white",
         });
         setShowPasswordReset(false);
         setIsFirstLogin(false);
@@ -199,167 +192,209 @@ const Auth = () => {
     }
   };
 
-  if (showPasswordReset) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Lock className="h-6 w-6 text-white" />
-            </div>
-            <CardTitle className="text-2xl font-bold">Set New Password</CardTitle>
-            <p className="text-slate-600">
-              {isFirstLogin ? 'Your admin has provided a temporary password. Please set a new secure password.' : 'Update your password'}
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-blue-50 p-3 rounded-md mb-4">
-              <p className="text-sm text-blue-700">
-                <strong>Security Notice:</strong> For your security, you must change the temporary password provided by your administrator.
-              </p>
-            </div>
-            
-            <form onSubmit={handlePasswordReset} className="space-y-4">
-              <div>
-                <Label htmlFor="newPassword">New Password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  className="mt-1"
-                  placeholder="Enter new password (min 6 characters)"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="mt-1"
-                  placeholder="Confirm new password"
-                />
-              </div>
+  const inputVariants = {
+    focus: { scale: 1.02, transition: { duration: 0.2 } },
+    blur: { scale: 1, transition: { duration: 0.2 } }
+  };
 
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
-                {loading ? 'Updating...' : 'Update Password'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Shield className="h-6 w-6 text-white" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-slate-800">
-            {isLogin ? 'Login' : 'Create Account'}
-          </CardTitle>
-          <p className="text-slate-600">
-            {isLogin ? 'Access RBI Compliance System' : 'Join RBI Compliance System'}
-          </p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
-            {!isLogin && (
-              <div>
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required={!isLogin}
-                  className="mt-1"
-                  placeholder="Enter your full name"
-                />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">
+      <AnimatePresence>
+        <motion.div
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="w-full max-w-md bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20"
+        >
+          {showPasswordReset ? (
+            <div className="p-8">
+              <div className="flex justify-center mb-6">
+                <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center">
+                  <Lock className="h-8 w-8 text-blue-400" />
+                </div>
               </div>
-            )}
-            
-            <div>
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="mt-1"
-                placeholder="Enter any email address (Gmail, Yahoo, etc.)"
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                You can use any email address including Gmail, Yahoo, or company email
+              <h2 className="text-2xl font-bold text-white text-center mb-2">Set New Password</h2>
+              <p className="text-gray-300 text-center mb-6">
+                {isFirstLogin ? 'Please set a new secure password.' : 'Update your password'}
               </p>
-            </div>
-            
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="mt-1"
-                placeholder={isLogin ? "Enter your password or temporary password from admin" : "Enter your password"}
-              />
-              {isLogin && (
-                <p className="text-xs text-slate-500 mt-1">
-                  If you received a temporary password from admin, you'll be asked to change it after login
+              
+              <div className="bg-blue-500/10 p-4 rounded-lg mb-6">
+                <p className="text-sm text-blue-300">
+                  <strong>Security Notice:</strong> For your security, please create a strong password with at least 6 characters.
                 </p>
+              </div>
+
+              <form onSubmit={handlePasswordReset} className="space-y-6">
+                <motion.div variants={inputVariants} whileFocus="focus">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">New Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div variants={inputVariants} whileFocus="focus">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+                </motion.div>
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-red-500/20 border border-red-500/50 p-3 rounded-lg"
+                  >
+                    <p className="text-sm text-red-300">{error}</p>
+                  </motion.div>
+                )}
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Updating...' : 'Update Password'}
+                </motion.button>
+              </form>
+            </div>
+          ) : (
+            <div className="p-8">
+              <div className="flex justify-center mb-4">
+                <div className="w-8 h-8 bg-blue-600/20 rounded-full flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-blue-400" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-white text-center mb-2">
+                {isLogin ? 'Adcompel' : 'Create Account'}
+              </h2>
+              <p className="text-gray-300 text-center mb-6">
+                {isLogin ? 'Access RBI Compliance System' : 'Join RBI Compliance System'}
+              </p>
+
+              <form onSubmit={handleAuth} className="space-y-6">
+                {!isLogin && (
+                  <motion.div variants={inputVariants} whileFocus="focus">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required={!isLogin}
+                        className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                <motion.div variants={inputVariants} whileFocus="focus">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  {/* <p className="text-xs text-gray-400 mt-2">Use any email address (Gmail, Yahoo, or company email)</p> */}
+                </motion.div>
+
+                <motion.div variants={inputVariants} whileFocus="focus">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder={isLogin ? "Enter your password" : "Create a password"}
+                    />
+                  </div>
+                  {/* {isLogin && (
+                    
+                  )} */}
+                </motion.div>
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-red-500/20 border border-red-500/50 p-3 rounded-lg"
+                  >
+                    <p className="text-sm text-red-300">{error}</p>
+                  </motion.div>
+                )}
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Create Account')}
+                </motion.button>
+              </form>
+
+              <motion.div
+                whileHover={{ x: 5 }}
+                className="mt-6 text-center"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setError('');
+                  }}
+                  className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors duration-200"
+                >
+                  {/* {isLogin ? "Need an account? Sign up" : "Already have an account? Login"} */}
+                </button>
+              </motion.div>
+
+              {!isLogin && (
+                <div className="mt-6 bg-blue-500/10 p-4 rounded-lg">
+                  <p className="text-sm text-blue-300">
+                    <strong>Note:</strong> No email verification required - you can login immediately after account creation. An admin will assign your roles and permissions.
+                  </p>
+                </div>
               )}
             </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
-              {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Create Account')}
-            </Button>
-          </form>
-
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-              }}
-              className="text-blue-600 hover:text-blue-800 text-sm"
-            >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
-            </button>
-          </div>
-
-          {!isLogin && (
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
-                <strong>Note:</strong> No email verification required - you can login immediately after account creation. An admin will assign you appropriate roles and permissions to access compliance features.
-              </p>
-            </div>
           )}
-        </CardContent>
-      </Card>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };

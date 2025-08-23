@@ -8,50 +8,50 @@
 /* Base Layer Styles */
 @layer base {
   :root {
-    /* Luxurious light theme with indigo, emerald, and gold */
-    --background: 220 60% 97%; /* Soft off-white with indigo tint */
-    --foreground: 222 20% 15%; /* Deep charcoal for contrast */
-    --card: 220 50% 98%; /* Slightly brighter card background */
-    --card-foreground: 222 20% 15%;
-    --popover: 220 50% 98%;
-    --popover-foreground: 222 20% 15%;
-    --primary: 217 80% 45%; /* Deep indigo */
+    /* Modern light theme with dark indigo, cyan, and gold */
+    --background: 220 70% 98%; /* Soft off-white with indigo tint */
+    --foreground: 222 30% 10%; /* Deep charcoal for high contrast */
+    --card: 220 60% 99%; /* Bright, translucent card background */
+    --card-foreground: 222 30% 10%;
+    --popover: 220 60% 99%;
+    --popover-foreground: 222 30% 10%;
+    --primary: 217 90% 50%; /* Vibrant indigo */
     --primary-foreground: 0 0% 100%; /* White for contrast */
-    --secondary: 160 60% 90%; /* Light emerald for secondary elements */
-    --secondary-foreground: 222 20% 15%;
-    --muted: 220 30% 92%; /* Muted indigo for subtle backgrounds */
-    --muted-foreground: 220 15% 35%;
-    --accent: 45 80% 65%; /* Warm gold accent */
-    --accent-foreground: 222 20% 15%;
-    --destructive: 0 70% 45%; /* Rich crimson for destructive actions */
+    --secondary: 160 70% 85%; /* Light cyan for secondary elements */
+    --secondary-foreground: 222 30% 10%;
+    --muted: 220 40% 95%; /* Subtle indigo for backgrounds */
+    --muted-foreground: 220 20% 30%;
+    --accent: 45 90% 60%; /* Vibrant gold accent */
+    --accent-foreground: 222 30% 10%;
+    --destructive: 0 80% 40%; /* Deep crimson for destructive actions */
     --destructive-foreground: 0 0% 100%;
-    --border: 220 20% 80%; /* Softer indigo border */
-    --input: 220 20% 80%;
-    --ring: 45 80% 65%; /* Gold ring for focus states */
-    --radius: 1rem; /* Slightly larger radius for elegance */
+    --border: 220 30% 85%; /* Soft indigo border */
+    --input: 220 30% 85%;
+    --ring: 45 90% 60%; /* Gold ring for focus states */
+    --radius: 1.25rem; /* Modern, slightly larger radius */
   }
 
   .dark {
-    /* Dark theme with deeper tones */
-    --background: 222 80% 6%; /* Dark indigo */
-    --foreground: 210 50% 95%; /* Light gray for readability */
-    --card: 222 80% 6%;
-    --card-foreground: 210 50% 95%;
-    --popover: 222 80% 6%;
-    --popover-foreground: 210 50% 95%;
-    --primary: 217 85% 55%; /* Vibrant indigo */
-    --primary-foreground: 222 50% 10%; /* Darker for contrast */
-    --secondary: 160 50% 20%; /* Deep emerald */
-    --secondary-foreground: 210 50% 95%;
-    --muted: 217 40% 15%; /* Muted dark indigo */
-    --muted-foreground: 215 25% 60%;
-    --accent: 45 85% 60%; /* Rich gold */
-    --accent-foreground: 210 50% 95%;
-    --destructive: 0 65% 35%; /* Darker crimson */
-    --destructive-foreground: 210 50% 95%;
-    --border: 217 40% 15%;
-    --input: 217 40% 15%;
-    --ring: 45 85% 60%; /* Gold for dark mode */
+    /* Dark theme with deeper, futuristic tones */
+    --background: 222 90% 4%; /* Dark indigo */
+    --foreground: 210 60% 98%; /* Light gray for readability */
+    --card: 222 90% 5%; /* Darker card for glassmorphism */
+    --card-foreground: 210 60% 98%;
+    --popover: 222 90% 5%;
+    --popover-foreground: 210 60% 98%;
+    --primary: 217 95% 60%; /* Bright indigo */
+    --primary-foreground: 222 60% 5%; /* Darker for contrast */
+    --secondary: 160 60% 15%; /* Deep cyan */
+    --secondary-foreground: 210 60% 98%;
+    --muted: 217 50% 10%; /* Dark muted indigo */
+    --muted-foreground: 215 30% 65%;
+    --accent: 45 95% 55%; /* Rich gold */
+    --accent-foreground: 210 60% 98%;
+    --destructive: 0 70% 30%; /* Darker crimson */
+    --destructive-foreground: 210 60% 98%;
+    --border: 217 50% 10%;
+    --input: 217 50% 10%;
+    --ring: 45 95% 55%; /* Gold for dark mode */
   }
 
   * {
@@ -61,10 +61,11 @@
   body {
     @apply bg-background text-foreground font-sans antialiased text-sm;
     font-family: 'Inter', 'Montserrat', sans-serif;
-    line-height: 1.6;
-    background: linear-gradient(135deg, hsl(var(--background)), hsl(var(--muted)));
+    line-height: 1.7;
+    background: linear-gradient(145deg, hsl(var(--background)), hsl(var(--muted) / 0.8));
     background-size: 200% 200%;
-    animation: gradientFlow 15s ease infinite;
+    animation: gradientFlow 12s ease infinite;
+    backdrop-filter: blur(10px);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -75,23 +76,24 @@
   select,
   button,
   textarea {
-    @apply transition-all duration-500 ease-in-out;
+    @apply transition-all duration-300 ease-in-out;
   }
 
   input:focus,
   select:focus,
   button:focus,
   textarea:focus {
-    @apply outline-none ring-2 ring-ring ring-offset-2 scale-105;
-    box-shadow: 0 0 10px hsl(var(--ring) / 0.4);
+    @apply outline-none ring-2 ring-ring ring-offset-2 scale-[1.03];
+    box-shadow: 0 0 12px hsl(var(--ring) / 0.3);
   }
 }
 
 /* Component Layer Styles */
 @layer components {
   .btn-primary {
-    @apply bg-primary text-primary-foreground px-6 py-3 rounded-xl hover:bg-primary/90 hover:scale-105 focus:ring-ring focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 relative overflow-hidden;
-    animation: pulse 2.5s infinite;
+    @apply bg-primary text-primary-foreground px-6 py-3 rounded-xl hover:bg-primary/80 hover:scale-[1.03] focus:ring-ring focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 relative overflow-hidden;
+    animation: pulse 2s ease infinite;
+    backdrop-filter: blur(6px);
   }
 
   .btn-primary::before {
@@ -101,9 +103,9 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.25) 0%, transparent 80%);
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.3s ease;
   }
 
   .btn-primary:hover::before {
@@ -111,27 +113,30 @@
   }
 
   .form-input {
-    @apply h-14 px-5 text-sm rounded-lg border border-input focus:ring-ring focus:ring-2 bg-card/50;
-    backdrop-filter: blur(5px);
+    @apply h-12 px-4 text-sm rounded-lg border border-input focus:ring-ring focus:ring-2 bg-card/40;
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
   .form-field {
-    @apply space-y-2.5 transition-all duration-500;
+    @apply space-y-2 transition-all duration-300;
   }
 
   .form-field:hover {
-    @apply scale-[1.02];
+    @apply scale-[1.01];
   }
 
   .alert-success {
-    @apply bg-accent/20 border-accent/50 text-accent-foreground p-5 rounded-xl flex items-center gap-4 mt-4 shadow-lg;
-    animation: slideIn 0.4s ease-out;
-    backdrop-filter: blur(8px);
+    @apply bg-accent/15 border border-accent/40 text-accent-foreground p-4 rounded-xl flex items-center gap-3 mt-4 shadow-lg;
+    animation: slideIn 0.3s ease-out;
+    backdrop-filter: blur(10px);
   }
 
   .card-animated {
-    @apply shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-500 ease-in-out bg-card rounded-2xl p-7 relative;
-    background: linear-gradient(90deg, hsl(var(--card)), hsl(var(--muted)));
+    @apply shadow-lg hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 ease-in-out bg-card rounded-xl p-6 relative;
+    background: linear-gradient(90deg, hsl(var(--card) / 0.9), hsl(var(--muted) / 0.7));
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .card-animated::before {
@@ -141,9 +146,9 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    background: radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.15) 0%, transparent 80%);
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.3s ease;
   }
 
   .card-animated:hover::before {
@@ -151,35 +156,36 @@
   }
 
   .tab {
-    @apply px-5 py-2.5 rounded-xl transition-all duration-500 ease-in-out text-sm font-medium;
+    @apply px-4 py-2 rounded-lg transition-all duration-300 ease-in-out text-sm font-medium;
   }
 
   .tab-active {
-    @apply bg-primary text-primary-foreground shadow-lg scale-105;
-    box-shadow: 0 4px 15px hsl(var(--primary) / 0.3);
+    @apply bg-primary text-primary-foreground shadow-md scale-[1.03];
+    box-shadow: 0 4px 12px hsl(var(--primary) / 0.25);
   }
 
   .widget {
-    @apply p-6 rounded-xl bg-secondary shadow-lg transition-all duration-500 ease-in-out hover:shadow-xl hover:scale-105;
-    background: linear-gradient(90deg, hsl(var(--secondary)), hsl(var(--muted)));
+    @apply p-5 rounded-xl bg-secondary shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-[1.03];
+    background: linear-gradient(90deg, hsl(var(--secondary) / 0.9), hsl(var(--muted) / 0.7));
+    backdrop-filter: blur(10px);
   }
 
   .glass-effect {
-    backdrop-filter: blur(12px);
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    @apply shadow-xl p-7 rounded-2xl;
+    backdrop-filter: blur(14px);
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    @apply shadow-xl p-6 rounded-xl;
   }
 }
 
 /* Animations */
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.03); }
 }
 
 @keyframes slideIn {
-  from { transform: translateY(25px); opacity: 0; }
+  from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
@@ -191,40 +197,62 @@
 
 /* Hero Section */
 .hero-section {
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=1200');
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.85), hsl(var(--secondary) / 0.85));
   background-size: cover;
   background-position: center;
-  @apply text-white py-24 px-8 rounded-2xl relative;
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--secondary) / 0.9));
+  @apply text-white py-20 px-6 rounded-xl relative;
+  backdrop-filter: blur(10px);
 }
 
 /* Project Card Hover Effect */
 .project-card-hover {
-  @apply transition-all duration-500 ease-in-out rounded-xl bg-card;
-  background: linear-gradient(90deg, hsl(var(--card)), hsl(var(--muted)));
+  @apply transition-all duration-300 ease-in-out rounded-xl bg-card;
+  background: linear-gradient(90deg, hsl(var(--card) / 0.9), hsl(var(--muted) / 0.7));
+  backdrop-filter: blur(12px);
 }
 
 .project-card-hover:hover {
-  @apply transform -translate-y-3 shadow-xl;
-  box-shadow: 0 8px 25px hsl(var(--primary) / 0.4);
+  @apply transform -translate-y-2 shadow-xl;
+  box-shadow: 0 6px 20px hsl(var(--primary) / 0.3);
 }
 
 /* Table Inputs */
 table input[type="number"],
 table input[type="text"],
 table textarea {
-  width: 200%;
-  min-width: 80px;
-  padding: 0.3rem 0.4rem;
-  font-size: 0.9rem;
+  width: 100%;
+  min-width: 70px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
   resize: horizontal;
   box-sizing: border-box;
-  @apply rounded-lg border-input bg-card/50;
-  backdrop-filter: blur(5px);
+  @apply rounded-lg border-input bg-card/40;
+  backdrop-filter: blur(8px);
 }
 
 /* Custom Utility */
 .bg-construction-600 {
-  background-color: hsl(var(--primary));
-  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)));
+  background: linear-gradient(90deg, hsl(var(--primary) / 0.9), hsl(var(--secondary) / 0.9));
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  body {
+    @apply text-xs;
+  }
+  .btn-primary {
+    @apply px-4 py-2;
+  }
+  .form-input {
+    @apply h-10 px-3;
+  }
+  .card-animated {
+    @apply p-4 rounded-lg;
+  }
+  .widget {
+    @apply p-4 rounded-lg;
+  }
+  .hero-section {
+    @apply py-12 px-4;
+  }
 }
