@@ -289,10 +289,10 @@ const Auth = () => {
                 </div>
               </div>
               <h2 className="text-2xl font-bold text-white text-center mb-2">
-                {isLogin ? 'Adcompel' : 'Create Account'}
+                {isLogin ? 'Vigilant' : 'Create Account'}
               </h2>
               <p className="text-gray-300 text-center mb-6">
-                {isLogin ? 'Access RBI Compliance System' : 'Join RBI Compliance System'}
+                {isLogin ? 'RBI Grievance & Compliance System' : 'Join RBI Compliance System'}
               </p>
 
               <form onSubmit={handleAuth} className="space-y-6">
