@@ -130,7 +130,7 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-#00BF47 flex">
       <Sidebar 
         activeModule={activeModule} 
         setActiveModule={setActiveModule}
@@ -138,12 +138,12 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
         availableModules={availableModules}
       />
       <main className="flex-1 overflow-auto">
-        <div className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center">
+        <div className="bg-#00BF47 border-b border-gray-200 px-6 py-3 flex justify-between items-center">
           <div className="text-sm text-gray-600">
             Welcome, {userProfile?.full_name || user?.email} 
             {userProfile?.role && (
               <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
-                isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+                isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue text-blue'
               }`}>
                 {userProfile.role}
               </span>
@@ -167,43 +167,26 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
 
 const AdminDashboard: React.FC<{ onModuleChange: (module: string) => void }> = ({ onModuleChange }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-#00BF47-50">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-red-600 mb-2">
-                Admin Dashboard
-              </h1>
-              <p className="text-gray-600 text-base">
-                Complete administrative control and comprehensive compliance analytics
-              </p>
-            </div>
-            <div className="text-right bg-red-50 rounded-lg p-3 border border-red-200">
-              <div className="text-xs text-red-600 font-medium">Administrator</div>
-              <div className="text-sm font-semibold text-gray-700">
-                Full Access
-              </div>
-            </div>
-          </div>
-        </div>
+       
 
         {/* Interactive Compliance Summary Cards */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="space-y-4">
+          {/* <div className="bg-green rounded-xl shadow-sm border border-gray-200 p-2">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-gray-800 mb-2">Compliance Overview</h2>
               <p className="text-gray-600 text-sm">Real-time compliance metrics - Click cards to navigate to modules</p>
             </div>
-          </div>
+          </div> */}
           
           <ComplianceSummaryCards onModuleChange={onModuleChange} />
         </div>
 
         {/* TAT Metrics Section */}
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-gray-800 mb-2">TAT Performance Metrics</h2>
               <p className="text-gray-600 text-sm">Turn-around time analysis and SLA compliance tracking</p>

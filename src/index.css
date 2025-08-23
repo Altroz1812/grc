@@ -1,201 +1,230 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Montserrat:wght@100..900&display=swap');
+
+/* Tailwind Directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Lemon Green Design System */
-
+/* Base Layer Styles */
 @layer base {
   :root {
-    /* Lemon Green Color Palette */
-    --background: 247 249 246; /* Very light greenish white for backgrounds */
-    --foreground: 20 30 20; /* Dark green charcoal for text */
-
-    --card: 255 255 255; /* Pure white for cards */
-    --card-foreground: 20 30 20;
-
-    --popover: 255 255 255;
-    --popover-foreground: 20 30 20;
-
-    /* Lemon Green Primary */
-    --primary: 100 180 60; /* Fresh lemon green */
-    --primary-foreground: 255 255 255; /* White for contrast */
-
-    /* Secondary - Soft gray-green */
-    --secondary: 220 235 220; /* Light pastel green for subtle accents */
-    --secondary-foreground: 60 85 60; /* Darker muted green */
-
-    --muted: 230 240 230; /* Soft muted light green */
-    --muted-foreground: 120 140 120; /* Medium muted green */
-
-    --accent: 180 210 160; /* Light moss green for highlights */
-    --accent-foreground: 30 50 25; /* Deep green text */
-
-    --destructive: 185 30 30; /* Vivid red for errors */
-    --destructive-foreground: 255 255 255;
-
-    --border: 180 210 160; /* Light border green */
-    --input: 180 210 160;
-    --ring: 100 180 60; /* Same as primary for focus rings */
-
-    --radius: 0.75rem; /* Rounded corners */
-
-    /* Sidebar */
-    --sidebar-background: 255 255 255;
-    --sidebar-foreground: 60 85 60;
-    --sidebar-primary: 100 180 60;
-    --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 220 235 220;
-    --sidebar-accent-foreground: 60 85 60;
-    --sidebar-border: 180 210 160;
-    --sidebar-ring: 100 180 60;
-
-    /* Chart Colors */
-    --chart-1: 100 180 60; /* Lemon green */
-    --chart-2: 80 110 70; /* Muted green */
-    --chart-3: 130 190 70; /* Bright green */
-    --chart-4: 120 140 110; /* Medium gray-green */
-    --chart-5: 150 200 90; /* Soft lime */
-    --chart-6: 215 230 205; /* Light green-gray */
+    /* Luxurious light theme with indigo, emerald, and gold */
+    --background: 220 60% 97%; /* Soft off-white with indigo tint */
+    --foreground: 222 20% 15%; /* Deep charcoal for contrast */
+    --card: 220 50% 98%; /* Slightly brighter card background */
+    --card-foreground: 222 20% 15%;
+    --popover: 220 50% 98%;
+    --popover-foreground: 222 20% 15%;
+    --primary: 217 80% 45%; /* Deep indigo */
+    --primary-foreground: 0 0% 100%; /* White for contrast */
+    --secondary: 160 60% 90%; /* Light emerald for secondary elements */
+    --secondary-foreground: 222 20% 15%;
+    --muted: 220 30% 92%; /* Muted indigo for subtle backgrounds */
+    --muted-foreground: 220 15% 35%;
+    --accent: 45 80% 65%; /* Warm gold accent */
+    --accent-foreground: 222 20% 15%;
+    --destructive: 0 70% 45%; /* Rich crimson for destructive actions */
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 80%; /* Softer indigo border */
+    --input: 220 20% 80%;
+    --ring: 45 80% 65%; /* Gold ring for focus states */
+    --radius: 1rem; /* Slightly larger radius for elegance */
   }
 
   .dark {
-    --background: 20 30 20; /* Deep dark green background */
-    --foreground: 247 249 246; /* Very light text */
-
-    --card: 25 40 25; /* Dark olive green cards */
-    --card-foreground: 247 249 246;
-
-    --popover: 25 40 25;
-    --popover-foreground: 247 249 246;
-
-    --primary: 130 190 70; /* Brighter lemon green for dark mode */
-    --primary-foreground: 255 255 255;
-
-    --secondary: 60 80 60;
-    --secondary-foreground: 247 249 246;
-
-    --muted: 60 85 60;
-    --muted-foreground: 140 160 140;
-
-    --accent: 80 110 70;
-    --accent-foreground: 247 249 246;
-
-    --destructive: 220 38 38; /* Bright red */
-    --destructive-foreground: 255 255 255;
-
-    --border: 60 85 60;
-    --input: 60 85 60;
-    --ring: 130 190 70;
-
-    --sidebar-background: 25 40 25;
-    --sidebar-foreground: 200 220 190;
-    --sidebar-primary: 130 190 70;
-    --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 60 85 60;
-    --sidebar-accent-foreground: 247 249 246;
-    --sidebar-border: 60 85 60;
-    --sidebar-ring: 130 190 70;
+    /* Dark theme with deeper tones */
+    --background: 222 80% 6%; /* Dark indigo */
+    --foreground: 210 50% 95%; /* Light gray for readability */
+    --card: 222 80% 6%;
+    --card-foreground: 210 50% 95%;
+    --popover: 222 80% 6%;
+    --popover-foreground: 210 50% 95%;
+    --primary: 217 85% 55%; /* Vibrant indigo */
+    --primary-foreground: 222 50% 10%; /* Darker for contrast */
+    --secondary: 160 50% 20%; /* Deep emerald */
+    --secondary-foreground: 210 50% 95%;
+    --muted: 217 40% 15%; /* Muted dark indigo */
+    --muted-foreground: 215 25% 60%;
+    --accent: 45 85% 60%; /* Rich gold */
+    --accent-foreground: 210 50% 95%;
+    --destructive: 0 65% 35%; /* Darker crimson */
+    --destructive-foreground: 210 50% 95%;
+    --border: 217 40% 15%;
+    --input: 217 40% 15%;
+    --ring: 45 85% 60%; /* Gold for dark mode */
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground font-sans antialiased text-sm;
+    font-family: 'Inter', 'Montserrat', sans-serif;
+    line-height: 1.6;
+    background: linear-gradient(135deg, hsl(var(--background)), hsl(var(--muted)));
+    background-size: 200% 200%;
+    animation: gradientFlow 15s ease infinite;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight;
+    @apply font-heading font-bold tracking-tight;
   }
 
-  h1 { @apply text-4xl lg:text-5xl; }
-  h2 { @apply text-3xl lg:text-4xl; }
-  h3 { @apply text-2xl lg:text-3xl; }
-  h4 { @apply text-xl lg:text-2xl; }
-  h5 { @apply text-lg lg:text-xl; }
-  h6 { @apply text-base lg:text-lg; }
+  input,
+  select,
+  button,
+  textarea {
+    @apply transition-all duration-500 ease-in-out;
+  }
+
+  input:focus,
+  select:focus,
+  button:focus,
+  textarea:focus {
+    @apply outline-none ring-2 ring-ring ring-offset-2 scale-105;
+    box-shadow: 0 0 10px hsl(var(--ring) / 0.4);
+  }
 }
 
+/* Component Layer Styles */
 @layer components {
-  /* Lemon Green Gradient Backgrounds */
-  .gradient-primary {
-    @apply bg-gradient-to-br from-[hsl(100,60%,40%)] to-[hsl(130,70%,30%)];
+  .btn-primary {
+    @apply bg-primary text-primary-foreground px-6 py-3 rounded-xl hover:bg-primary/90 hover:scale-105 focus:ring-ring focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 relative overflow-hidden;
+    animation: pulse 2.5s infinite;
   }
 
-  .gradient-card {
-    @apply bg-gradient-to-br from-white to-[hsl(230,60%,98%)];
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
   }
 
-  .gradient-success {
-    @apply bg-gradient-to-br from-[hsl(100,60%,40%)] to-[hsl(130,70%,30%)];
+  .btn-primary:hover::before {
+    opacity: 1;
   }
 
-  .gradient-warning {
-    @apply bg-gradient-to-br from-[hsl(70,30%,50%)] to-[hsl(90,25%,40%)];
+  .form-input {
+    @apply h-14 px-5 text-sm rounded-lg border border-input focus:ring-ring focus:ring-2 bg-card/50;
+    backdrop-filter: blur(5px);
   }
 
-  .gradient-danger {
-    @apply bg-gradient-to-br from-red-600 to-red-700;
+  .form-field {
+    @apply space-y-2.5 transition-all duration-500;
   }
 
-  /* Shadow system */
-  .shadow-soft {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.03);
+  .form-field:hover {
+    @apply scale-[1.02];
   }
 
-  .shadow-medium {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+  .alert-success {
+    @apply bg-accent/20 border-accent/50 text-accent-foreground p-5 rounded-xl flex items-center gap-4 mt-4 shadow-lg;
+    animation: slideIn 0.4s ease-out;
+    backdrop-filter: blur(8px);
   }
 
-  .shadow-strong {
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+  .card-animated {
+    @apply shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-500 ease-in-out bg-card rounded-2xl p-7 relative;
+    background: linear-gradient(90deg, hsl(var(--card)), hsl(var(--muted)));
   }
 
-  /* Glassmorphism */
-  .glass {
-    @apply bg-white/60 backdrop-blur-sm border border-green-200/50 shadow-soft;
+  .card-animated::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
   }
 
-  .glass-dark {
-    @apply bg-green-900/60 backdrop-blur-sm border border-green-700/50 shadow-soft;
+  .card-animated:hover::before {
+    opacity: 1;
   }
 
-  /* Hover Effects */
-  .hover-scale {
-    @apply transition-transform duration-200 ease-in-out hover:scale-[1.02];
+  .tab {
+    @apply px-5 py-2.5 rounded-xl transition-all duration-500 ease-in-out text-sm font-medium;
   }
 
-  .hover-glow {
-    @apply transition-shadow duration-200 ease-in-out hover:shadow-[0_0_15px_rgba(100,180,60,0.2)];
+  .tab-active {
+    @apply bg-primary text-primary-foreground shadow-lg scale-105;
+    box-shadow: 0 4px 15px hsl(var(--primary) / 0.3);
+  }
+
+  .widget {
+    @apply p-6 rounded-xl bg-secondary shadow-lg transition-all duration-500 ease-in-out hover:shadow-xl hover:scale-105;
+    background: linear-gradient(90deg, hsl(var(--secondary)), hsl(var(--muted)));
+  }
+
+  .glass-effect {
+    backdrop-filter: blur(12px);
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    @apply shadow-xl p-7 rounded-2xl;
   }
 }
 
-@layer utilities {
-  /* Text Gradients - Lemon Green */
-  .text-gradient-primary {
-    @apply bg-gradient-to-r from-[hsl(100,60%,40%)] to-[hsl(130,70%,30%)] bg-clip-text text-transparent;
-  }
-  .text-gradient-success {
-    @apply bg-gradient-to-r from-[hsl(100,60%,40%)] to-[hsl(130,70%,30%)] bg-clip-text text-transparent;
-  }
-  .text-gradient-warning {
-    @apply bg-gradient-to-r from-[hsl(70,30%,50%)] to-[hsl(90,25%,40%)] bg-clip-text text-transparent;
-  }
-  .text-gradient-danger {
-    @apply bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent;
-  }
+/* Animations */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
 
-  /* Smooth Scroll */
-  .scroll-smooth {
-    scroll-behavior: smooth;
-  }
+@keyframes slideIn {
+  from { transform: translateY(25px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 
-  /* Card Animation */
-  .card-animation {
-    @apply transition-all duration-300 ease-in-out hover:shadow-medium hover:-translate-y-1;
-  }
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Hero Section */
+.hero-section {
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=1200');
+  background-size: cover;
+  background-position: center;
+  @apply text-white py-24 px-8 rounded-2xl relative;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--secondary) / 0.9));
+}
+
+/* Project Card Hover Effect */
+.project-card-hover {
+  @apply transition-all duration-500 ease-in-out rounded-xl bg-card;
+  background: linear-gradient(90deg, hsl(var(--card)), hsl(var(--muted)));
+}
+
+.project-card-hover:hover {
+  @apply transform -translate-y-3 shadow-xl;
+  box-shadow: 0 8px 25px hsl(var(--primary) / 0.4);
+}
+
+/* Table Inputs */
+table input[type="number"],
+table input[type="text"],
+table textarea {
+  width: 200%;
+  min-width: 80px;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.9rem;
+  resize: horizontal;
+  box-sizing: border-box;
+  @apply rounded-lg border-input bg-card/50;
+  backdrop-filter: blur(5px);
+}
+
+/* Custom Utility */
+.bg-construction-600 {
+  background-color: hsl(var(--primary));
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)));
 }

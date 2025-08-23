@@ -1,110 +1,143 @@
-/* Root Theme Variables */
-:root {
-  --primary-color: #64a70b; /* Dark lemon green */
-  --primary-hover: #7ec323; /* Vibrant lemon green hover */
-  --primary-light: #a1d234; /* Lighter lemon green for accents */
-  --text-color: #1a2a0b; /* Dark green for text */
-  --background-color: #f7faf5; /* Very light greenish white background */
-  --card-bg: #ffffff; /* Card/box background */
-  --border-color: #d4e4b1; /* Soft green-gray border */
-  --success-color: #16a34a; /* Keep green for success notifications */
-  --error-color: #dc2626; /* Red for errors stays the same */
-  --info-color: #7ec323; /* Lemon green for info notifications */
-}
-
-/* General Layout */
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2.5rem;
   text-align: center;
-  background-color: var(--background-color);
-  color: var(--text-color);
-  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, #1E3A8A 0%, #10B981 100%); /* Deep indigo to emerald */
+  border-radius: 1.75rem;
+  box-shadow: 0 8px 40px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.1);
+  transition: background 0.5s ease;
 }
 
-/* Logo */
+#root:hover {
+  background: linear-gradient(135deg, #1E40AF 0%, #14B8A6 100%); /* Slight shift for interactivity */
+}
+
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  transition: filter 300ms, transform 200ms;
+  height: 6.5em;
+  padding: 1.75em;
+  will-change: filter, transform;
+  transition: filter 400ms ease, transform 400ms ease;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
 }
+
 .logo:hover {
-  filter: drop-shadow(0 0 2em var(--primary-light));
-  transform: scale(1.05);
+  filter: drop-shadow(0 0 2.5em #D1D5DB) glow(0 0 10px #FBBF24); /* Soft white glow with gold accent */
+  transform: scale(1.1) translateY(-5px);
 }
 
-/* Remove yellow React effect */
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em var(--primary-light));
+  filter: drop-shadow(0 0 2.5em #34D399) glow(0 0 10px #FBBF24); /* Emerald glow with gold */
+  transform: rotate(8deg) scale(1.1) translateY(-5px);
 }
 
-/* Card */
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 25s linear;
+  }
+}
+
 .card {
-  padding: 2em;
-  border-radius: 1rem;
-  background: var(--card-bg);
-  box-shadow: 0 4px 12px rgba(100, 167, 11, 0.08); /* subtle lemon green shadow */
-  border: 1px solid var(--border-color);
-  transition: transform 200ms;
+  padding: 2.5em;
+  border-radius: 1.5rem;
+  background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%); /* Blue to emerald gradient */
+  color: #F3F4F6; /* Light gray for readability */
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3), inset 0 0 8px rgba(255, 255, 255, 0.15);
+  transition: transform 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
+  position: relative;
+  overflow: hidden;
 }
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
 .card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.5), inset 0 0 12px rgba(255, 255, 255, 0.2);
+  background: linear-gradient(90deg, #2563EB 0%, #059669 100%); /* Slightly darker on hover */
 }
 
-/* Buttons */
-button,
-.btn {
-  background-color: var(--primary-color);
-  color: #fff;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 200ms, transform 100ms;
-}
-button:hover,
-.btn:hover {
-  background-color: var(--primary-hover);
-  transform: scale(1.02);
-}
-button:active,
-.btn:active {
-  transform: scale(0.98);
-}
-
-/* Dialog Box */
-.dialog {
-  background: var(--card-bg);
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 8px 24px rgba(100, 167, 11, 0.15);
-  border: 1px solid var(--border-color);
-}
-
-/* Notifications */
-.notification {
-  padding: 1rem 1.5rem;
-  border-radius: 0.75rem;
-  margin: 1rem 0;
-  font-weight: 500;
-}
-.notification.success {
-  background: var(--success-color);
-  color: #fff;
-}
-.notification.error {
-  background: var(--error-color);
-  color: #fff;
-}
-.notification.info {
-  background: var(--info-color);
-  color: #fff;
-}
-
-/* Subtle Text */
 .read-the-docs {
-  color: #a3ad71; /* muted lemon green gray */
+  color: #60A5FA; /* Soft blue for links */
+  text-decoration: none;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.read-the-docs::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: #FBBF24; /* Gold underline */
+  transition: width 0.3s ease;
+}
+
+.read-the-docs:hover {
+  color: #FBBF24; /* Gold on hover */
+}
+
+.read-the-docs:hover::after {
+  width: 100%;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom glow effect for browsers that support it */
+@supports (filter: drop-shadow(0 0 2.5em #D1D5DB)) {
+  .logo, .logo.react {
+    filter: drop-shadow(0 0 1em #D1D5DB);
+  }
+}
+
+/* Focus styles for accessibility */
+.card:focus-within,
+.logo:focus {
+  outline: 3px solid #FBBF24;
+  outline-offset: 4px;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  #root {
+    background: linear-gradient(135deg, #1E3A8A 0%, #047857 100%); /* Darker tones */
+  }
+  .card {
+    background: linear-gradient(90deg, #1E40AF 0%, #047857 100%);
+  }
+  .card:hover {
+    background: linear-gradient(90deg, #1E3A8A 0%, #059669 100%);
+  }
 }
