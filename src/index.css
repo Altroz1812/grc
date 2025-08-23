@@ -1,0 +1,201 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Lemon Green Design System */
+
+@layer base {
+  :root {
+    /* Lemon Green Color Palette */
+    --background: 247 249 246; /* Very light greenish white for backgrounds */
+    --foreground: 20 30 20; /* Dark green charcoal for text */
+
+    --card: 255 255 255; /* Pure white for cards */
+    --card-foreground: 20 30 20;
+
+    --popover: 255 255 255;
+    --popover-foreground: 20 30 20;
+
+    /* Lemon Green Primary */
+    --primary: 100 180 60; /* Fresh lemon green */
+    --primary-foreground: 255 255 255; /* White for contrast */
+
+    /* Secondary - Soft gray-green */
+    --secondary: 220 235 220; /* Light pastel green for subtle accents */
+    --secondary-foreground: 60 85 60; /* Darker muted green */
+
+    --muted: 230 240 230; /* Soft muted light green */
+    --muted-foreground: 120 140 120; /* Medium muted green */
+
+    --accent: 180 210 160; /* Light moss green for highlights */
+    --accent-foreground: 30 50 25; /* Deep green text */
+
+    --destructive: 185 30 30; /* Vivid red for errors */
+    --destructive-foreground: 255 255 255;
+
+    --border: 180 210 160; /* Light border green */
+    --input: 180 210 160;
+    --ring: 100 180 60; /* Same as primary for focus rings */
+
+    --radius: 0.75rem; /* Rounded corners */
+
+    /* Sidebar */
+    --sidebar-background: 255 255 255;
+    --sidebar-foreground: 60 85 60;
+    --sidebar-primary: 100 180 60;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 220 235 220;
+    --sidebar-accent-foreground: 60 85 60;
+    --sidebar-border: 180 210 160;
+    --sidebar-ring: 100 180 60;
+
+    /* Chart Colors */
+    --chart-1: 100 180 60; /* Lemon green */
+    --chart-2: 80 110 70; /* Muted green */
+    --chart-3: 130 190 70; /* Bright green */
+    --chart-4: 120 140 110; /* Medium gray-green */
+    --chart-5: 150 200 90; /* Soft lime */
+    --chart-6: 215 230 205; /* Light green-gray */
+  }
+
+  .dark {
+    --background: 20 30 20; /* Deep dark green background */
+    --foreground: 247 249 246; /* Very light text */
+
+    --card: 25 40 25; /* Dark olive green cards */
+    --card-foreground: 247 249 246;
+
+    --popover: 25 40 25;
+    --popover-foreground: 247 249 246;
+
+    --primary: 130 190 70; /* Brighter lemon green for dark mode */
+    --primary-foreground: 255 255 255;
+
+    --secondary: 60 80 60;
+    --secondary-foreground: 247 249 246;
+
+    --muted: 60 85 60;
+    --muted-foreground: 140 160 140;
+
+    --accent: 80 110 70;
+    --accent-foreground: 247 249 246;
+
+    --destructive: 220 38 38; /* Bright red */
+    --destructive-foreground: 255 255 255;
+
+    --border: 60 85 60;
+    --input: 60 85 60;
+    --ring: 130 190 70;
+
+    --sidebar-background: 25 40 25;
+    --sidebar-foreground: 200 220 190;
+    --sidebar-primary: 130 190 70;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 60 85 60;
+    --sidebar-accent-foreground: 247 249 246;
+    --sidebar-border: 60 85 60;
+    --sidebar-ring: 130 190 70;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+
+  h1 { @apply text-4xl lg:text-5xl; }
+  h2 { @apply text-3xl lg:text-4xl; }
+  h3 { @apply text-2xl lg:text-3xl; }
+  h4 { @apply text-xl lg:text-2xl; }
+  h5 { @apply text-lg lg:text-xl; }
+  h6 { @apply text-base lg:text-lg; }
+}
+
+@layer components {
+  /* Lemon Green Gradient Backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-[hsl(100,60%,40%)] to-[hsl(130,70%,30%)];
+  }
+
+  .gradient-card {
+    @apply bg-gradient-to-br from-white to-[hsl(230,60%,98%)];
+  }
+
+  .gradient-success {
+    @apply bg-gradient-to-br from-[hsl(100,60%,40%)] to-[hsl(130,70%,30%)];
+  }
+
+  .gradient-warning {
+    @apply bg-gradient-to-br from-[hsl(70,30%,50%)] to-[hsl(90,25%,40%)];
+  }
+
+  .gradient-danger {
+    @apply bg-gradient-to-br from-red-600 to-red-700;
+  }
+
+  /* Shadow system */
+  .shadow-soft {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.03);
+  }
+
+  .shadow-medium {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .shadow-strong {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Glassmorphism */
+  .glass {
+    @apply bg-white/60 backdrop-blur-sm border border-green-200/50 shadow-soft;
+  }
+
+  .glass-dark {
+    @apply bg-green-900/60 backdrop-blur-sm border border-green-700/50 shadow-soft;
+  }
+
+  /* Hover Effects */
+  .hover-scale {
+    @apply transition-transform duration-200 ease-in-out hover:scale-[1.02];
+  }
+
+  .hover-glow {
+    @apply transition-shadow duration-200 ease-in-out hover:shadow-[0_0_15px_rgba(100,180,60,0.2)];
+  }
+}
+
+@layer utilities {
+  /* Text Gradients - Lemon Green */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-[hsl(100,60%,40%)] to-[hsl(130,70%,30%)] bg-clip-text text-transparent;
+  }
+  .text-gradient-success {
+    @apply bg-gradient-to-r from-[hsl(100,60%,40%)] to-[hsl(130,70%,30%)] bg-clip-text text-transparent;
+  }
+  .text-gradient-warning {
+    @apply bg-gradient-to-r from-[hsl(70,30%,50%)] to-[hsl(90,25%,40%)] bg-clip-text text-transparent;
+  }
+  .text-gradient-danger {
+    @apply bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent;
+  }
+
+  /* Smooth Scroll */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  /* Card Animation */
+  .card-animation {
+    @apply transition-all duration-300 ease-in-out hover:shadow-medium hover:-translate-y-1;
+  }
+}

@@ -1,0 +1,110 @@
+/* Root Theme Variables */
+:root {
+  --primary-color: #64a70b; /* Dark lemon green */
+  --primary-hover: #7ec323; /* Vibrant lemon green hover */
+  --primary-light: #a1d234; /* Lighter lemon green for accents */
+  --text-color: #1a2a0b; /* Dark green for text */
+  --background-color: #f7faf5; /* Very light greenish white background */
+  --card-bg: #ffffff; /* Card/box background */
+  --border-color: #d4e4b1; /* Soft green-gray border */
+  --success-color: #16a34a; /* Keep green for success notifications */
+  --error-color: #dc2626; /* Red for errors stays the same */
+  --info-color: #7ec323; /* Lemon green for info notifications */
+}
+
+/* General Layout */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+}
+
+/* Logo */
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  transition: filter 300ms, transform 200ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em var(--primary-light));
+  transform: scale(1.05);
+}
+
+/* Remove yellow React effect */
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em var(--primary-light));
+}
+
+/* Card */
+.card {
+  padding: 2em;
+  border-radius: 1rem;
+  background: var(--card-bg);
+  box-shadow: 0 4px 12px rgba(100, 167, 11, 0.08); /* subtle lemon green shadow */
+  border: 1px solid var(--border-color);
+  transition: transform 200ms;
+}
+.card:hover {
+  transform: translateY(-3px);
+}
+
+/* Buttons */
+button,
+.btn {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 200ms, transform 100ms;
+}
+button:hover,
+.btn:hover {
+  background-color: var(--primary-hover);
+  transform: scale(1.02);
+}
+button:active,
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* Dialog Box */
+.dialog {
+  background: var(--card-bg);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 8px 24px rgba(100, 167, 11, 0.15);
+  border: 1px solid var(--border-color);
+}
+
+/* Notifications */
+.notification {
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  margin: 1rem 0;
+  font-weight: 500;
+}
+.notification.success {
+  background: var(--success-color);
+  color: #fff;
+}
+.notification.error {
+  background: var(--error-color);
+  color: #fff;
+}
+.notification.info {
+  background: var(--info-color);
+  color: #fff;
+}
+
+/* Subtle Text */
+.read-the-docs {
+  color: #a3ad71; /* muted lemon green gray */
+}

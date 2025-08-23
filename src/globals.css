@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Background & Foreground */
+    --background: 248 250 252;        /* Light gray for main background */
+    --foreground: 15 23 42;           /* Dark text color */
+
+    /* Cards & Popovers */
+    --card: 255 255 255;               /* White card backgrounds */
+    --card-foreground: 15 23 42;
+
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+
+    /* Primary & Accent Colors */
+    --primary: 30 64 175;              /* Deep professional blue */
+    --primary-foreground: 255 255 255;
+
+    --secondary: 71 85 105;            /* Cool gray */
+    --secondary-foreground: 248 250 252;
+
+    --accent: 37 99 235;               /* Royal Blue for highlights */
+    --accent-foreground: 255 255 255;
+
+    /* Alerts / Errors / Status */
+    --destructive: 185 28 28;          /* Red for destructive actions */
+    --destructive-foreground: 255 255 255;
+
+    --muted: 226 232 240;              /* Soft gray for subtle elements */
+    --muted-foreground: 100 116 139;
+
+    /* Borders & Input Focus */
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 30 64 175;                 /* Primary blue focus ring */
+
+    --radius: 0.75rem;                 /* Rounded corners */
+    
+    /* Sidebar */
+    --sidebar-background: 255 255 255;
+    --sidebar-foreground: 51 65 85;
+    --sidebar-primary: 30 64 175;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 37 99 235;
+    --sidebar-accent-foreground: 255 255 255;
+    --sidebar-border: 226 232 240;
+    --sidebar-ring: 30 64 175;
+
+    /* Charts */
+    --chart-1: 30 64 175;
+    --chart-2: 71 85 105;
+    --chart-3: 37 99 235;
+    --chart-4: 100 116 139;
+    --chart-5: 59 130 246;
+    --chart-6: 148 163 184;
+  }
+
+  .dark {
+    --background: 15 23 42;
+    --foreground: 248 250 252;
+
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
+
+    --popover: 30 41 59;
+    --popover-foreground: 248 250 252;
+
+    --primary: 59 130 246;
+    --primary-foreground: 255 255 255;
+
+    --secondary: 51 65 85;
+    --secondary-foreground: 248 250 252;
+
+    --accent: 37 99 235;
+    --accent-foreground: 255 255 255;
+
+    --destructive: 220 38 38;
+    --destructive-foreground: 255 255 255;
+
+    --muted: 51 65 85;
+    --muted-foreground: 148 163 184;
+
+    --border: 51 65 85;
+    --input: 51 65 85;
+    --ring: 59 130 246;
+
+    --sidebar-background: 30 41 59;
+    --sidebar-foreground: 203 213 225;
+    --sidebar-primary: 59 130 246;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 37 99 235;
+    --sidebar-accent-foreground: 255 255 255;
+    --sidebar-border: 51 65 85;
+    --sidebar-ring: 59 130 246;
+  }
+
+  /* Apply global styles */
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
