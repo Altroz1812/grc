@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -176,9 +175,9 @@ const ComplianceAnalytics = () => {
     };
   }, [queryClient]);
 
-  if (isLoading || !analyticsData) {
+  if (isLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-teal-500 border-teal-100 cursor-pointer grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
@@ -189,6 +188,29 @@ const ComplianceAnalytics = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+    );
+  }
+
+  if (!analyticsData || analyticsData.pendingCompliances.total === 0 && analyticsData.tatBreaches.current === 0) {
+    return (
+      <div className="space-y-8">
+        <Card className="bg-white border-gray-200 text-center py-12">
+          <CardContent>
+            <div className="flex flex-col items-center space-y-4">
+              <TrendingUp className="h-16 w-16 text-gray-400" />
+              <div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Analytics Data Available</h3>
+                <p className="text-gray-600 mb-4">
+                  Compliance analytics will appear here once you have compliance assignments.
+                </p>
+                <p className="text-sm text-gray-500">
+                  Create some compliance assignments to start viewing analytics and trends.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

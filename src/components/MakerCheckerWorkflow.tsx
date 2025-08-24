@@ -582,26 +582,28 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 "></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    // <div className="min-h-screen bg-gray-50 p-8">
+       <div className="min-h-screen hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-620 to-blue-800 border-teal-100 p-8">
+
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-slate-400 mb-2">
             {isAdmin ? 'Maker-Checker Workflow Management' : 'My Worklist'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-slate-400">
             {isAdmin 
               ? 'Smart assignment and compliance workflow management' 
               : `Your assigned compliance tasks and workflow (Employee: ${currentEmployee?.id || 'Not found'})`
             }
           </p>
           {!isAdmin && (
-            <div className="mt-2 text-sm text-gray-500">
+            <div className="mt-2 text-sm text-gray-200">
               Email: {userProfile?.email} | Role: {currentEmployee?.role_name || userRole} | Tasks: {assignedItems.length}
             </div>
           )}
@@ -621,7 +623,7 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
             activeTab={activeTab}
             onTabChange={setActiveTab}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
               {activeTab === 'assigned' ? (
                 assignedItems.length === 0 ? (
                   <div className="col-span-full text-center py-12">

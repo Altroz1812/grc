@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,11 +127,12 @@ const TATMetrics = () => {
     };
   }, [queryClient]);
 
-  if (isLoading || !tatData) {
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse bg-white border-gray-200">
+          <Card key={i} 
+             className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-teal-500 border-teal-100 cursor-pointer">
             <CardHeader>
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
             </CardHeader>
@@ -141,6 +141,29 @@ const TATMetrics = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+    );
+  }
+
+  if (!tatData || tatData.slaCompliance.totalCompliances === 0) {
+    return (
+      <div className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-teal-500 border-teal-100 cursor-pointer space-y-8 bg-gray-50 p-6">
+        <Card className="bg-white border-gray-200 text-center py-12">
+          <CardContent>
+            <div className="flex flex-col items-center space-y-4">
+              <Clock className="h-16 w-16 text-gray-400" />
+              <div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">No TAT Data Available</h3>
+                <p className="text-gray-600 mb-4">
+                  TAT metrics will appear here once you have compliance assignments.
+                </p>
+                <p className="text-sm text-gray-500">
+                  Create some compliance assignments to start tracking TAT performance.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -130,7 +130,7 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
   };
 
   return (
-    <div className="min-h-screen bg-#00BF47 flex">
+    <div className="min-h-screen hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-blue-800 border-teal-100 cursor-pointer flex">
       <Sidebar 
         activeModule={activeModule} 
         setActiveModule={setActiveModule}
@@ -138,7 +138,7 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
         availableModules={availableModules}
       />
       <main className="flex-1 overflow-auto">
-        <div className="bg-#00BF47 border-b border-gray-200 px-6 py-3 flex justify-between items-center">
+        {/* <div className="bg-#00BF47 border-b border-gray-200 px-6 py-3 flex justify-between items-center">
           <div className="text-sm text-gray-600">
             Welcome, {userProfile?.full_name || user?.email} 
             {userProfile?.role && (
@@ -158,7 +158,7 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
             <LogOut className="h-4 w-4" />
             Logout
           </Button>
-        </div>
+        </div> */}
         {renderActiveModule()}
       </main>
     </div>
@@ -186,10 +186,10 @@ const AdminDashboard: React.FC<{ onModuleChange: (module: string) => void }> = (
 
         {/* TAT Metrics Section */}
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">TAT Performance Metrics</h2>
-              <p className="text-gray-600 text-sm">Turn-around time analysis and SLA compliance tracking</p>
+          <div className="bg-gradient-to-br from-gray-700 to-blue-900 border-blue-100 rounded-xl shadow-sm border border-gray-200 p-1">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-slate-400 mb-2">TAT Performance Metrics</h2>
+              <p className="text-gray-400 text-sm">Turn-around time analysis and SLA compliance tracking</p>
             </div>
           </div>
           
@@ -209,7 +209,7 @@ const AdminDashboard: React.FC<{ onModuleChange: (module: string) => void }> = (
         </div>
 
         {/* Interactive Admin Quick Actions */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        {/* <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-800 mb-2">Administrative Actions</h2>
             <p className="text-gray-600 text-sm">Quick access to system management modules</p>
@@ -260,7 +260,7 @@ const AdminDashboard: React.FC<{ onModuleChange: (module: string) => void }> = (
               <p className="text-sm text-gray-600">Manage user accounts and roles</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

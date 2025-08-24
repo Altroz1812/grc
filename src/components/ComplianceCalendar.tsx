@@ -196,8 +196,10 @@ const ComplianceCalendar = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-cyan-50 p-8">
-      <div className="max-w-7xl mx-auto">
+   // <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-cyan-50 p-8">
+      <div className="min-h-screen hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-620 to-blue-800 border-teal-100 p-8">
+
+     <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 animate-fade-in">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent mb-2">
