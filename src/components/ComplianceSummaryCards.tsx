@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, AlertTriangle, CheckCircle, TrendingUp, Clock, XCircle } from "lucide-react";
-import { format, addDays, isPast, isToday, isTomorrow } from "date-fns";
+import { format, addDays, isPast, isToday, isTomorrow, toDate } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ComplianceMetrics {
@@ -33,20 +33,33 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
         if (error) throw error;
 
         const now = new Date();
-        const upcoming = assignments?.filter(a => 
-          new Date(a.due_date) > now && 
-          new Date(a.due_date) <= addDays(now, 7) && 
-          a.status !== 'approved'
-        ).length || 0;
+        now.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
 
-        const overdue = assignments?.filter(a => 
+        
+        const upcoming = assignments?.filter(a => {
+          const dueDate = new Date(a.due_date);
+          dueDate.setHours(0, 0, 0, 0);
+          const sevenDaysFromNow = addDays(now, 7);
+          
+          return dueDate >= now && 
+                 dueDate <= sevenDaysFromNow && 
+                 !['approved', 'submitted'].includes(a.status);
+        }).length || 0;
+
+        const overdue = assignments?.filter(a =>
           new Date(a.due_date) < now && 
-          a.status !== 'approved'
+          a.status !== 'approved' && a.status !== 'submitted'
         ).length || 0;
 
-        const onTime = assignments?.filter(a => 
-          a.status === 'approved'
-        ).length || 0;
+       // Get today's date without time
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+const onTime = assignments?.filter(a => {
+  const dueDate = new Date(a.due_date);
+  dueDate.setHours(0, 0, 0, 0); // ignore time part
+  return dueDate <= today && a.status === 'submitted';
+}).length || 0;
 
         const escalated = assignments?.filter(a => 
           a.status === 'escalated'
@@ -55,7 +68,7 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
         const totalActive = assignments?.length || 0;
 
         const slaBreaches = assignments?.filter(a => 
-          new Date(a.due_date) < addDays(now, -2) && 
+          new Date(a.due_date) < addDays(now, -0) && 
           a.status !== 'approved'
         ).length || 0;
 
@@ -125,7 +138,7 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
 
   if (isLoading || !metrics) {
     return (
-      <div className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-teal-500 border-teal-100 cursor-pointer grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
@@ -142,21 +155,21 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Upcoming Compliances */}
         <Card 
-          className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 animate-scale-in cursor-pointer"
+          className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-blue-50 border-blue-100 animate-scale-in cursor-pointer"
           onClick={() => onModuleChange?.('calendar')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-200">Upcoming Compliances</CardTitle>
-            <CalendarIcon className="h-5 w-5 text-slate-200 group-hover:scale-110 transition-transform" />
+            <CardTitle className="text-sm font-medium text-slate-600">Upcoming Compliances</CardTitle>
+            <CalendarIcon className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-700">{metrics.upcoming}</div>
-            <div className="flex items-center text-xs text-slate-200 mt-1">
+            <div className="flex items-center text-xs text-blue-600 mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
               Click to view calendar
             </div>
@@ -165,16 +178,16 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
 
         {/* Overdue Compliances */}
         <Card 
-          className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-gray-700 via-red-900 to-gray-900 border-red-100 animate-scale-in [animation-delay:100ms] cursor-pointer"
+          className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-red-50 border-red-100 animate-scale-in [animation-delay:100ms] cursor-pointer"
           onClick={() => onModuleChange?.('workflow')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-200">Overdue Compliances</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">Overdue Compliances</CardTitle>
             <AlertTriangle className="h-5 w-5 text-red-600 group-hover:scale-110 transition-transform" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-700">{metrics.overdue}</div>
-            <div className="flex items-center text-xs text-slate-200 mt-1">
+            <div className="flex items-center text-xs text-red-600 mt-1">
               <Clock className="h-3 w-3 mr-1" />
               Click to view tasks
             </div>
@@ -183,18 +196,16 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
 
         {/* On-Time Submissions */}
         <Card 
-          // className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-green-50 border-green-100 animate-scale-in [animation-delay:200ms] cursor-pointer"
-         className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-gray-700 via-green-900 to-gray-900 border-red-100 animate-scale-in [animation-delay:100ms] cursor-pointer"
-
+          className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-green-50 border-green-100 animate-scale-in [animation-delay:200ms] cursor-pointer"
           onClick={() => onModuleChange?.('reports')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-200">On-Time Submissions</CardTitle>
-            <CheckCircle className="h-5 w-5 text-green-200 group-hover:scale-110 transition-transform" />
+            <CardTitle className="text-sm font-medium text-slate-600">On-Time Submissions</CardTitle>
+            <CheckCircle className="h-5 w-5 text-green-600 group-hover:scale-110 transition-transform" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-700">{metrics.onTime}</div>
-            <div className="flex items-center text-xs text-green-200 mt-1">
+            <div className="flex items-center text-xs text-green-600 mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
               Click for reports
             </div>
@@ -203,18 +214,16 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
 
         {/* Escalated Cases */}
         <Card 
-          // className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-orange-50 border-orange-100 animate-scale-in [animation-delay:300ms] cursor-pointer"
-         className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-gray-700 via-red-900 to-gray-900 border-red-100 animate-scale-in [animation-delay:100ms] cursor-pointer"
-
+          className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-orange-50 border-orange-100 animate-scale-in [animation-delay:300ms] cursor-pointer"
           onClick={() => onModuleChange?.('workflow')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-slate-200">Escalated Cases</CardTitle>
-            <XCircle className="h-5 w-5 text-orange-200 group-hover:scale-110 transition-transform" />
+            <CardTitle className="text-sm font-medium text-slate-600">Escalated Cases</CardTitle>
+            <XCircle className="h-5 w-5 text-orange-600 group-hover:scale-110 transition-transform" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-orange-700">{metrics.escalated}</div>
-            <div className="flex items-center text-xs text-orange-200 mt-1">
+            <div className="flex items-center text-xs text-orange-600 mt-1">
               <AlertTriangle className="h-3 w-3 mr-1" />
               Click to review
             </div>
@@ -225,21 +234,21 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
       {/* SLA Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card 
-          className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-purple-900 border-purple-100 cursor-pointer"
+          className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-purple-50 border-purple-100 cursor-pointer"
           onClick={() => onModuleChange?.('reports')}
         >
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-slate-400 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-slate-400" />
+            <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-purple-600" />
               SLA Performance
             </CardTitle>
-            <CardDescription className="text-slate-200">Service Level Agreement tracking - Click for detailed reports</CardDescription>
+            <CardDescription className="text-slate-600">Service Level Agreement tracking - Click for detailed reports</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-300">SLA Compliance Rate</span>
-                <span className="text-2xl font-bold text-slate-400">
+                <span className="text-sm font-medium text-slate-600">SLA Compliance Rate</span>
+                <span className="text-2xl font-bold text-purple-700">
                   {metrics.totalActive > 0 ? (((metrics.totalActive - metrics.slaBreaches) / metrics.totalActive) * 100).toFixed(1) : 0}%
                 </span>
               </div>
@@ -249,7 +258,7 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
                   style={{ width: `${metrics.totalActive > 0 ? ((metrics.totalActive - metrics.slaBreaches) / metrics.totalActive) * 100 : 0}%` }}
                 ></div>
               </div>
-              <div className="flex justify-between text-sm text-slate-400">
+              <div className="flex justify-between text-sm text-slate-600">
                 <span>Breaches: {metrics.slaBreaches}</span>
                 <span>Total: {metrics.totalActive}</span>
               </div>
@@ -258,15 +267,15 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
         </Card>
 
         <Card 
-          className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-teal-500 border-teal-100 cursor-pointer"
+          className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-teal-50 border-teal-100 cursor-pointer"
           onClick={() => onModuleChange?.('workflow')}
         >
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-slate-400 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-slate-400" />
+            <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-teal-600" />
               Recent Activity
             </CardTitle>
-            <CardDescription className="text-slate-400">Latest compliance tasks - Click to view workflow</CardDescription>
+            <CardDescription className="text-slate-600">Latest compliance tasks - Click to view workflow</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -275,7 +284,7 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
                   <div key={task.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
                     <div className="flex-1">
                       <h4 className="text-sm font-medium text-slate-800 truncate">{task.name}</h4>
-                      <p className="text-xs text-slate-400">{task.department}</p>
+                      <p className="text-xs text-slate-600">{task.department}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge 
@@ -292,7 +301,7 @@ const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({ onModul
                   </div>
                 ))
               ) : (
-                <div className="text-center py-4 text-slate-400">
+                <div className="text-center py-4 text-gray-500">
                   <p className="text-sm">No recent tasks found</p>
                 </div>
               )}

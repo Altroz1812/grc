@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import Papa from 'papaparse';
 
 interface BulkUploadProps {
   onUploadComplete: () => void;
@@ -25,23 +26,23 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
   } | null>(null);
   const { toast } = useToast();
 
+  const expectedHeaders = [
+    'compliance_id',
+    'name',
+    'category',
+    'section',
+    'short_description',
+    'description',
+    'risk_type',
+    'frequency',
+    'department_code',
+    'status'
+  ];
+
   const downloadTemplate = () => {
-    const headers = [
-      'compliance_id',
-      'name',
-      'category',
-      'section',
-      'short_description',
-      'description',
-      'risk_type',
-      'frequency',
-      'department_code',
-      'status'
-    ];
-    
-    const csvContent = headers.join(',') + '\n' +
-      'COMP001,Sample Compliance,Regulatory,Section A,Short description,Full description,High,Monthly,DEPT001,active\n' +
-      'COMP002,Another Compliance,Operational,Section B,Another short description,Another full description,Medium,Quarterly,DEPT002,active';
+    const csvContent = expectedHeaders.join(',') + '\n' +
+      'GRC1001,Sample Compliance,Regulatory,Section A,Short description,Full description,High,Quarterly,CRM,active\n' +
+      'GRC1002,Another Compliance,Operational,Section B,Another short description,Another full description,Medium,Quarterly,CRM,active';
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -55,68 +56,96 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
     document.body.removeChild(a);
   };
 
-  const parseCSV = (text: string) => {
-    const lines = text.split('\n').filter(line => line.trim());
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-    const data = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-      const row: any = {};
-      headers.forEach((header, index) => {
-        row[header] = values[index] || '';
-      });
-      data.push(row);
+  const validateHeaders = (headers: string[]) => {
+    const normalizedHeaders = headers.map(h => h.trim().toLowerCase());
+    const missingHeaders = expectedHeaders.filter(h => !normalizedHeaders.includes(h.toLowerCase()));
+    return missingHeaders.length === 0 ? null : `Missing headers: ${missingHeaders.join(', ')}`;
+  };
+
+  const validateRecordsForDuplicates = async (records: any[]) => {
+    console.log('Checking for duplicate compliance_id values...');
+    const complianceIds = records
+      .map((r, i) => ({ id: r.compliance_id?.trim() || '', row: i + 2 }))
+      .filter(r => r.id);
+    if (complianceIds.length === 0) {
+      console.log('No valid compliance_id values found');
+      return ['No valid compliance_id values found'];
     }
-    
-    return data;
+
+    try {
+      const { data: existing } = await supabase
+        .from('compliances')
+        .select('compliance_id')
+        .in('compliance_id', complianceIds.map(r => r.id));
+      
+      console.log('Existing compliance_id values:', existing);
+      if (existing && existing.length > 0) {
+        const duplicates = existing.map(e => e.compliance_id);
+        const duplicateRows = complianceIds
+          .filter(c => duplicates.includes(c.id))
+          .map(c => `Row ${c.row}: compliance_id '${c.id}' already exists`);
+        console.log('Duplicate compliance_id errors:', duplicateRows);
+        return duplicateRows;
+      }
+      console.log('No duplicate compliance_id values found');
+      return [];
+    } catch (error) {
+      console.error('Error checking duplicates:', error);
+      return ['Error checking for duplicate compliance_id values'];
+    }
   };
 
   const validateRecord = async (record: any, rowIndex: number) => {
     const errors: string[] = [];
+    console.log(`Validating row ${rowIndex}:`, record);
 
     // Check required fields
-    if (!record.compliance_id) errors.push('compliance_id is required');
-    if (!record.name) errors.push('name is required');
-    if (!record.category) errors.push('category is required');
-    if (!record.frequency) errors.push('frequency is required');
+    if (!record.compliance_id || record.compliance_id.trim() === '') {
+      errors.push('compliance_id is required');
+    }
+    if (!record.name || record.name.trim() === '') {
+      errors.push('name is required');
+    }
+    if (!record.category || record.category.trim() === '') {
+      errors.push('category is required');
+    }
+    if (!record.frequency || record.frequency.trim() === '') {
+      errors.push('frequency is required');
+    }
 
     // Validate status
     const validStatuses = ['active', 'inactive'];
-    if (record.status && !validStatuses.includes(record.status.toLowerCase())) {
+    if (record.status && !validStatuses.includes(record.status.toLowerCase().trim())) {
       errors.push(`status must be one of: ${validStatuses.join(', ')}`);
     }
 
     // Validate frequency
     const validFrequencies = ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Yearly'];
-    if (record.frequency && !validFrequencies.includes(record.frequency)) {
+    if (record.frequency && !validFrequencies.includes(record.frequency.trim())) {
       errors.push(`frequency must be one of: ${validFrequencies.join(', ')}`);
     }
 
     // Check if department exists (if provided)
     if (record.department_code && record.department_code.trim() !== '') {
-      const { data: dept } = await supabase
-        .from('departments')
-        .select('code')
-        .eq('code', record.department_code)
-        .single();
-      
-      if (!dept) {
-        errors.push(`department_code '${record.department_code}' does not exist`);
+      try {
+        const { data: dept } = await supabase
+          .from('departments')
+          .select('code')
+          .eq('code', record.department_code.trim())
+          .maybeSingle();
+        
+        if (!dept) {
+          errors.push(`department_code '${record.department_code}' does not exist`);
+        }
+      } catch (error) {
+        console.log('Error checking department:', error);
+        errors.push(`Error validating department_code '${record.department_code}'`);
       }
     }
 
-    // Check for duplicate compliance_id
-    const { data: existing } = await supabase
-      .from('compliances')
-      .select('compliance_id')
-      .eq('compliance_id', record.compliance_id)
-      .single();
-    
-    if (existing) {
-      errors.push(`compliance_id '${record.compliance_id}' already exists`);
+    if (errors.length > 0) {
+      console.log(`Row ${rowIndex} validation errors:`, errors);
     }
-
     return errors;
   };
 
@@ -125,12 +154,51 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
 
     setUploading(true);
     setUploadProgress(0);
-    
+
     try {
+      console.log('Starting file upload process...');
+
+      // Clear previous upload records
+      console.log('Clearing previous compliance_bulk_uploads records...');
+      const { error: deleteError } = await supabase
+        .from('compliance_bulk_uploads')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+      if (deleteError) {
+        console.error('Error clearing previous uploads:', deleteError);
+        throw new Error(`Failed to clear previous uploads: ${deleteError.message}`);
+      }
+      console.log('Previous upload records cleared successfully');
+
       const text = await file.text();
-      const data = parseCSV(text);
+      console.log('File content loaded, length:', text.length);
       
-      // Create bulk upload record
+      const result = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transform: (value: string) => value.trim(),
+      });
+
+      const headers = result.meta.fields || [];
+      const headerError = validateHeaders(headers);
+      if (headerError) {
+        throw new Error(headerError);
+      }
+      console.log('Headers validated:', headers);
+
+      const data = result.data;
+      console.log('Parsed CSV rows:', data.length, data);
+
+      if (data.length === 0) {
+        throw new Error('No valid data rows found in CSV file');
+      }
+
+      // Check for duplicates in bulk
+      const duplicateErrors = await validateRecordsForDuplicates(data);
+      if (duplicateErrors.length > 0) {
+        throw new Error(`Duplicate compliance_id values found: ${duplicateErrors.join('; ')}`);
+      }
+
       const { data: uploadRecord, error: uploadError } = await supabase
         .from('compliance_bulk_uploads')
         .insert({
@@ -141,56 +209,99 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
         .select()
         .single();
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Error creating upload record:', uploadError);
+        throw uploadError;
+      }
+      console.log('Created upload record:', uploadRecord);
 
       let successful = 0;
       let failed = 0;
       const errors: string[] = [];
+      const validRecords = [];
 
-      // Process each record with validation
+      // Validate all records
       for (let i = 0; i < data.length; i++) {
         const record = data[i];
-        setUploadProgress(((i + 1) / data.length) * 100);
-
-        try {
-          // Validate record first
-          const validationErrors = await validateRecord(record, i + 2);
-          
-          if (validationErrors.length > 0) {
-            failed++;
-            errors.push(`Row ${i + 2}: ${validationErrors.join(', ')}`);
-            continue;
-          }
-
-          // Insert record
-          const { error } = await supabase
-            .from('compliances')
-            .insert({
-              compliance_id: record.compliance_id,
-              name: record.name,
-              category: record.category,
-              section: record.section || null,
-              short_description: record.short_description || null,
-              description: record.description || null,
-              risk_type: record.risk_type || null,
-              frequency: record.frequency,
-              department_code: record.department_code || null,
-              status: record.status?.toLowerCase() || 'active'
-            });
-
-          if (error) {
-            failed++;
-            errors.push(`Row ${i + 2}: ${error.message}`);
-          } else {
-            successful++;
-          }
-        } catch (err) {
+        const rowNumber = i + 2;
+        setUploadProgress(((i + 1) / data.length) * 50);
+        const validationErrors = await validateRecord(record, rowNumber);
+        if (validationErrors.length > 0) {
           failed++;
-          errors.push(`Row ${i + 2}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          errors.push(`Row ${rowNumber}: ${validationErrors.join(', ')}`);
+          console.log(`Row ${rowNumber} failed validation:`, validationErrors);
+        } else {
+          const validRecord = {
+            compliance_id: record.compliance_id ? record.compliance_id.trim() : '',
+            name: record.name ? record.name.trim() : '',
+            category: record.category ? record.category.trim() : '',
+            section: record.section ? record.section.trim() : null,
+            short_description: record.short_description ? record.short_description.trim() : null,
+            description: record.description ? record.description.trim() : null,
+            risk_type: record.risk_type ? record.risk_type.trim() : null,
+            frequency: record.frequency ? record.frequency.trim() : '',
+            department_code: record.department_code ? record.department_code.trim() : null,
+            status: record.status ? record.status.toLowerCase().trim() : 'active'
+          };
+          // Ensure no 'id' field is included
+          if ('id' in validRecord) {
+            console.error(`Row ${rowNumber}: Unexpected 'id' field in record`, validRecord);
+            errors.push(`Row ${rowNumber}: Unexpected 'id' field in record`);
+            failed++;
+          } else {
+            validRecords.push(validRecord);
+          }
         }
       }
 
-      // Update bulk upload record
+      // Exit if no valid records
+      if (validRecords.length === 0) {
+        throw new Error('No valid records to insert after validation');
+      }
+
+      // Log insert payload
+      console.log('Insert payload:', JSON.stringify(validRecords, null, 2));
+
+      // Perform individual inserts to isolate UUID issues
+      console.log(`Attempting individual inserts for ${validRecords.length} records`);
+      for (let i = 0; i < validRecords.length; i++) {
+        const record = validRecords[i];
+        const rowNumber = i + 2;
+        try {
+          console.log(`Inserting row ${rowNumber} with compliance_id '${record.compliance_id}':`, record);
+          const { error: singleError } = await supabase
+            .from('compliances')
+            .insert(record);
+          if (singleError) {
+            failed++;
+            let errorMessage = singleError.message;
+            if (singleError.code === '23505') {
+              if (singleError.message.includes('compliances_compliance_id_key')) {
+                const match = singleError.message.match(/Key \(compliance_id\)=\((.*?)\)/);
+                errorMessage = match
+                  ? `Duplicate compliance_id '${match[1]}'`
+                  : `Duplicate compliance_id '${record.compliance_id}'`;
+              } else if (singleError.message.includes('compliances_pkey')) {
+                errorMessage = `Duplicate primary key (id) for compliance_id '${record.compliance_id}'`;
+              }
+            }
+            errors.push(`Row ${rowNumber}: Insert failed for compliance_id '${record.compliance_id}': ${errorMessage}`);
+            console.log(`Row ${rowNumber} insert error:`, JSON.stringify(singleError, null, 2));
+          } else {
+            successful++;
+            console.log(`Row ${rowNumber} inserted successfully with compliance_id '${record.compliance_id}'`);
+          }
+        } catch (err) {
+          failed++;
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          errors.push(`Row ${rowNumber}: Insert failed for compliance_id '${record.compliance_id}': ${errorMessage}`);
+          console.log(`Row ${rowNumber} processing error:`, err);
+        }
+        setUploadProgress(50 + ((i + 1) / validRecords.length) * 50);
+      }
+
+      setUploadProgress(100);
+      console.log(`Updating upload record with results: successful=${successful}, failed=${failed}`);
       await supabase
         .from('compliance_bulk_uploads')
         .update({
@@ -206,7 +317,7 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
         total: data.length,
         successful,
         failed,
-        errors: errors.slice(0, 10) // Show first 10 errors
+        errors: errors.slice(0, 10)
       });
 
       if (successful > 0) {
@@ -215,6 +326,12 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
           description: `${successful} compliances uploaded successfully${failed > 0 ? `, ${failed} failed` : ''}`,
         });
         onUploadComplete();
+      } else {
+        toast({
+          title: "Upload failed",
+          description: "No records were successfully uploaded",
+          variant: "destructive",
+        });
       }
 
     } catch (error) {
@@ -247,10 +364,12 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Bulk Upload Compliances</DialogTitle>
+          <DialogDescription>
+            Upload a CSV file to add multiple compliance records at once. Download the template to ensure correct formatting.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Template Download */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center gap-3">
               <FileSpreadsheet className="h-5 w-5 text-blue-600" />
@@ -265,7 +384,6 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
             </div>
           </div>
 
-          {/* Important Notes */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h3 className="font-medium text-yellow-900 mb-2">Important Notes:</h3>
             <ul className="text-sm text-yellow-800 space-y-1">
@@ -274,10 +392,10 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
               <li>• Department codes must exist in your departments table</li>
               <li>• Compliance IDs must be unique</li>
               <li>• Required fields: compliance_id, name, category, frequency</li>
+              <li>• If your data contains commas, wrap the field in double quotes</li>
             </ul>
           </div>
 
-          {/* File Upload */}
           {!uploadResult && (
             <div className="space-y-4">
               <div>
@@ -318,7 +436,6 @@ export const ComplianceBulkUpload: React.FC<BulkUploadProps> = ({ onUploadComple
             </div>
           )}
 
-          {/* Upload Results */}
           {uploadResult && (
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-4">

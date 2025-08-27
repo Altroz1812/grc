@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -89,8 +88,12 @@ export const SmartAssignment: React.FC<SmartAssignmentProps> = ({
       console.log('Fetched employees:', employeesData);
 
       // Separate makers and checkers
-      const makers = (employeesData || []).filter(emp => emp.role_name?.toLowerCase() === 'maker');
-      const checkers = (employeesData || []).filter(emp => emp.role_name?.toLowerCase() === 'checker');
+      const makers = (employeesData || []).filter(emp => 
+        emp.role_name?.toLowerCase() === 'maker' || emp.role_name === 'Maker'
+      );
+      const checkers = (employeesData || []).filter(emp => 
+        emp.role_name?.toLowerCase() === 'checker' || emp.role_name === 'Checker'
+      );
 
       console.log('Available makers:', makers);
       console.log('Available checkers:', checkers);

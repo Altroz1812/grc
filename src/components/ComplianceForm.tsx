@@ -32,6 +32,7 @@ export const ComplianceForm: React.FC<ComplianceFormProps> = ({
     risk_type: '',
     frequency: '',
     department_code: '',
+    next_due: '',
     status: 'active'
   });
   const [loading, setLoading] = useState(false);
@@ -54,6 +55,7 @@ export const ComplianceForm: React.FC<ComplianceFormProps> = ({
           risk_type: compliance.risk_type || '',
           frequency: compliance.frequency || '',
           department_code: compliance.department_code || '',
+          next_due: compliance.next_due || '',
           status: compliance.status || 'active'
         });
       } else {
@@ -69,6 +71,7 @@ export const ComplianceForm: React.FC<ComplianceFormProps> = ({
           risk_type: '',
           frequency: '',
           department_code: '',
+          next_due: '',
           status: 'active'
         });
       }
@@ -141,14 +144,15 @@ export const ComplianceForm: React.FC<ComplianceFormProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[100vh] overflow-y-auto">
+        {/* <DialogContent className="w-full max-w-auto max-h-[80vh] overflow-y-auto flex flex-col"> */}
         <DialogHeader>
           <DialogTitle>
             {compliance ? 'Edit Compliance' : 'Add New Compliance'}
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-2">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="compliance_id">Compliance ID</Label>
@@ -224,7 +228,7 @@ export const ComplianceForm: React.FC<ComplianceFormProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="risk_type">Risk Type</Label>
               <Select value={formData.risk_type} onValueChange={(value) => handleChange('risk_type', value)}>
@@ -254,7 +258,7 @@ export const ComplianceForm: React.FC<ComplianceFormProps> = ({
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          
 
           <div>
             <Label htmlFor="department_code">Department Code</Label>
@@ -265,8 +269,22 @@ export const ComplianceForm: React.FC<ComplianceFormProps> = ({
             />
           </div>
 
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" disabled={loading} className="flex-1">
+          
+
+  <div>
+    <Label htmlFor="next_due">Due Date</Label>
+    <Input
+      id="next_due"
+      type="date"
+      value={formData.next_due}
+      onChange={(e) => handleChange('next_due', e.target.value)}
+      required
+    />
+  </div>
+
+          </div>
+           <div className="sticky bottom-2 p-1 flex justify-end gap-1">
+            <Button type="submit" disabled={loading} className="text-sm px-2 py-1">
               {loading ? 'Saving...' : (compliance ? 'Update' : 'Create')}
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>

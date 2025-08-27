@@ -134,31 +134,31 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
       <Sidebar 
         activeModule={activeModule} 
         setActiveModule={setActiveModule}
-        userRole={userProfile?.role || 'user'}
+        userRole={userProfile?.role }
         availableModules={availableModules}
       />
       <main className="flex-1 overflow-auto">
-        {/* <div className="bg-#00BF47 border-b border-gray-200 px-6 py-3 flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            Welcome, {userProfile?.full_name || user?.email} 
-            {userProfile?.role && (
-              <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
-                isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue text-blue'
-              }`}>
-                {userProfile.role}
-              </span>
-            )}
+          <div className="bg-#00BF47 border-b border-gray-200 px-6 py-3 flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              Welcome, {userProfile?.full_name || user?.email} 
+              {userProfile?.role && (
+                <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                  isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue text-blue'
+                }`}>
+                  {userProfile.role}
+                </span>
+              )}
+            </div>
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-gray-600 hover:text-red-600 hover:border-red-200"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
           </div>
-          <Button 
-            onClick={handleLogout}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 text-gray-600 hover:text-red-600 hover:border-red-200"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
-        </div> */}
         {renderActiveModule()}
       </main>
     </div>

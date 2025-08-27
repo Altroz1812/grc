@@ -50,7 +50,6 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
   useEffect(() => {
     if (isOpen) {
       fetchComplianceDetails();
-      fetchAssignments();
     }
   }, [isOpen, complianceId]);
 
@@ -70,10 +69,11 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
       console.log('Compliance department:', data?.department_code);
       setComplianceDepartment(data?.department_code || '');
       
-      // Fetch users after getting department
-      if (data?.department_code) {
-        await fetchAvailableUsers(data.department_code);
-      }
+      // Fetch both assignments and users in parallel
+      await Promise.all([
+        fetchAssignments(),
+        fetchAvailableUsers(data?.department_code || '')
+      ]);
     } catch (error) {
       console.error('Error fetching compliance details:', error);
       toast({
@@ -86,10 +86,21 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
 
   const fetchAssignments = async () => {
     try {
-      // First fetch the assignments
+      // First fetch the assignments with user data joined
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('compliance_user_assignments')
-        .select('id, user_id, status, assigned_at')
+        .select(`
+          id, 
+          user_id, 
+          status, 
+          assigned_at,
+          employees (
+            id,
+            name,
+            email,
+            role_name
+          )
+        `)
         .eq('compliance_id', complianceId);
 
       if (assignmentsError) {
@@ -97,41 +108,25 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
         throw assignmentsError;
       }
 
-      console.log('Fetched assignments:', assignmentsData);
+      console.log('Fetched assignments with employees:', assignmentsData);
 
       if (!assignmentsData || assignmentsData.length === 0) {
         setAssignments([]);
         return;
       }
 
-      // Get user IDs from assignments
-      const userIds = assignmentsData.map(assignment => assignment.user_id);
-
-      // Fetch employee details for these user IDs
-      const { data: employeesData, error: employeesError } = await supabase
-        .from('employees')
-        .select('id, name, email, role_name')
-        .in('id', userIds);
-
-      if (employeesError) {
-        console.error('Error fetching employees:', employeesError);
-        throw employeesError;
-      }
-
-      console.log('Fetched employees:', employeesData);
-
-      // Map assignments with employee data
-      const mappedAssignments = assignmentsData.map(assignment => {
-        const employee = employeesData?.find(emp => emp.id === assignment.user_id);
-        return {
-          ...assignment,
-          user_role: employee?.role_name || 'maker',
-          employees: {
-            name: employee?.name || 'Unknown',
-            email: employee?.email || 'Unknown'
-          }
-        };
-      });
+      // Map the assignments with the nested employee data
+      const mappedAssignments = assignmentsData.map(assignment => ({
+        id: assignment.id,
+        user_id: assignment.user_id,
+        status: assignment.status,
+        assigned_at: assignment.assigned_at,
+        user_role: assignment.employees?.role_name || 'maker',
+        employees: {
+          name: assignment.employees?.name || 'Unknown',
+          email: assignment.employees?.email || 'Unknown'
+        }
+      }));
       
       setAssignments(mappedAssignments);
     } catch (error) {
@@ -145,6 +140,12 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
   };
 
   const fetchAvailableUsers = async (departmentCode: string) => {
+    if (!departmentCode) {
+      console.log('No department code provided for user fetching');
+      setAvailableUsers([]);
+      return;
+    }
+    
     try {
       console.log('Fetching users for department:', departmentCode);
       
@@ -153,7 +154,6 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
         .select('id, name, email, role_name, department_code')
         .eq('status', 'active')
         .eq('department_code', departmentCode)
-        .in('role_name', ['Maker', 'Checker'])
         .order('name');
 
       if (error) {
@@ -292,7 +292,7 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-blue-100 text-blue-800';
+      case 'active': return 'bg-green-100 text-green-800';
       case 'inactive': return 'bg-red-100 text-red-800';
       case 'completed': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -308,31 +308,35 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
     }
   };
 
-  // Filter users by department and role
+  // Filter users by role (case-insensitive)
   const availableMakers = availableUsers.filter(
-    user => user.role_name?.toLowerCase() === 'maker' && 
-    user.department_code === complianceDepartment &&
+    user => user.role_name && user.role_name.toLowerCase().includes('maker') && 
     !assignments.some(assignment => assignment.user_id === user.id)
   );
 
   const availableCheckers = availableUsers.filter(
-    user => user.role_name?.toLowerCase() === 'checker' && 
-    user.department_code === complianceDepartment &&
+    user => user.role_name && user.role_name.toLowerCase().includes('checker') && 
     !assignments.some(assignment => assignment.user_id === user.id)
   );
 
-  const makerAssignments = assignments.filter(assignment => assignment.user_role?.toLowerCase() === 'maker');
-  const checkerAssignments = assignments.filter(assignment => assignment.user_role?.toLowerCase() === 'checker');
+  // Filter assignments by role (case-insensitive)
+  const makerAssignments = assignments.filter(assignment => 
+    assignment.user_role && assignment.user_role.toLowerCase().includes('maker')
+  );
+  
+  const checkerAssignments = assignments.filter(assignment => 
+    assignment.user_role && assignment.user_role.toLowerCase().includes('checker')
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={!isActive}>
-          <Users className="h-3 w-3 mr-1" />
+          <Users className="h-3 w-2 mr-1" />
           Assign ({assignments.length})
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-auto">
         <DialogHeader>
           <DialogTitle>Manage Assignments - {complianceName}</DialogTitle>
           {complianceDepartment && (
@@ -364,7 +368,7 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
                       ) : (
                         availableMakers.map(user => (
                           <SelectItem key={user.id} value={user.id}>
-                            {user.name} ({user.email}) - {user.department_code}
+                            {user.name} ({user.email})
                           </SelectItem>
                         ))
                       )}
@@ -402,7 +406,7 @@ export const ComplianceAssignments: React.FC<ComplianceAssignmentsProps> = ({
                       ) : (
                         availableCheckers.map(user => (
                           <SelectItem key={user.id} value={user.id}>
-                            {user.name} ({user.email}) - {user.department_code}
+                            {user.name} ({user.email})
                           </SelectItem>
                         ))
                       )}

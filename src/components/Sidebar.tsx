@@ -27,6 +27,7 @@ interface SidebarProps {
     full_name: string;
     email: string;
     role?: string;
+    user_role?: string; // This is already the role name: 'maker', 'checker', 'admin'
     status: string;
   };
 }
@@ -39,9 +40,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   userProfile
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const isAdmin = userRole === 'admin';
+  
+  // SIMPLIFIED: user_role in profiles table is already the role name string
+  const effectiveRoleName = userProfile?.user_role || userRole || 'user';
+  const isAdmin = effectiveRoleName === 'admin';
 
-  console.log('Sidebar - User role:', userRole);
+  console.log('Sidebar - User profile:', userProfile);
+  console.log('Sidebar - Effective role:', effectiveRoleName);
   console.log('Sidebar - Is admin:', isAdmin);
 
   const menuItems = [
@@ -152,7 +157,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <motion.div 
-      className="h-screen bg-gradient-to-br from-gray-700 to-blue-800 text-white overflow-hidden"
+      className="min-h-screen bg-gradient-to-br from-gray-700 to-blue-800 text-white overflow-hidden"
       variants={sidebarVariants}
       animate={isOpen ? "open" : "closed"}
       onMouseEnter={() => setIsOpen(true)}
@@ -178,18 +183,17 @@ const Sidebar: React.FC<SidebarProps> = ({
           animate={isOpen ? "open" : "closed"}
         >
           <div className="flex flex-col items-start">
-            {/* <h1 className="text-xl font-bold text-white drop-shadow-md">Vigilant</h1> */}
             <motion.div 
               className="mt-2 text-sm text-gray-300"
               variants={textVariants}
               animate={isOpen ? "open" : "closed"}
             >
               <p>Welcome, {userProfile?.full_name || userProfile?.email || 'User'}</p>
-              {userProfile?.role && (
+              {effectiveRoleName && effectiveRoleName !== 'user' && (
                 <span className={`mt-1 inline-block px-2 py-1 rounded text-xs font-medium ${
                   isAdmin ? 'bg-red-600 text-slate-400' : 'bg-blue-600 text-slate-400'
                 }`}>
-                  {userProfile.role}
+                  {effectiveRoleName}
                 </span>
               )}
             </motion.div>

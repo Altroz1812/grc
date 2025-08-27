@@ -6,86 +6,176 @@ import { Progress } from "@/components/ui/progress";
 import { Clock, AlertTriangle, TrendingUp, TrendingDown, Target, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+// const normalizeDate = (date: string | Date) => {
+//   const d = new Date(date);
+//   d.setHours(0, 0, 0, 0);
+//   return d;
+// };
+
+
+
 const TATMetrics = () => {
   const queryClient = useQueryClient();
 
   const { data: tatData, isLoading } = useQuery({
     queryKey: ['tat-metrics'],
     queryFn: async () => {
-      const { data: tatMetrics, error: tatError } = await supabase
-        .rpc('calculate_tat_metrics');
+      // Run Supabase queries in parallel
+      console.log("🔄 Fetching TAT metrics...");
+      const [
+        { data: tatMetrics, error: tatError },
+        { data: assignments, error: assignmentsError },
+        { data: departments, error: deptError }
+      ] = await Promise.all([
+        supabase.rpc('calculate_tat_metrics'),
+        supabase.from("compliance_assignments").select(`
+          id,
+          due_date,
+          status,
+          compliance:compliances(id, name, department_code),
+          assigned_employee:employees!compliance_assignments_assigned_to_fkey(
+            id,
+            name,
+            email,
+            profile:profiles(full_name)
+          ),
+          checker_employee:employees!compliance_assignments_checker_id_fkey(
+            id,
+            name,
+            email,
+            profile:profiles(full_name)
+          )
+        `),
+        supabase.from('departments').select('*')
+      ]);
+
+   if (tatError) {
+        console.error("❌ Error fetching tatMetrics:", tatError);
+        throw tatError;
+      }
+      if (assignmentsError) {
+        console.error("❌ Error fetching assignments:", assignmentsError);
+        throw assignmentsError;
+      }
+      if (deptError) {
+        console.error("❌ Error fetching departments:", deptError);
+        throw deptError;
+      }
+
+      console.log("✅ Supabase Data:", { tatMetrics, assignments, departments });
+    
 
       if (tatError) throw tatError;
-
-      const { data: assignments, error: assignmentsError } = await supabase
-        .from('compliance_assignments')
-        .select(`
-          *,
-          compliance:compliances(id, name, department_code),
-          assigned_profile:profiles!compliance_assignments_assigned_to_fkey(full_name)
-        `);
-
       if (assignmentsError) throw assignmentsError;
-
-      const { data: departments, error: deptError } = await supabase
-        .from('departments')
-        .select('*');
-
       if (deptError) throw deptError;
 
-      const metrics = tatMetrics[0] || {
+      const metrics = (tatMetrics && tatMetrics[0]) || {
         total_assignments: 0,
         overdue_count: 0,
         tat_breaches: 0,
         avg_days_overdue: 0
       };
 
-      const departmentTAT = departments.map(dept => {
-        const deptAssignments = assignments.filter(a => 
-          a.compliance?.department_code === dept.code
-        );
-        const deptOverdue = deptAssignments.filter(a => 
-          new Date(a.due_date) < new Date() && a.status !== 'approved'
-        );
-        const performance = deptAssignments.length > 0 
-          ? Math.round(((deptAssignments.length - deptOverdue.length) / deptAssignments.length) * 100)
-          : 100;
+      // Department TAT
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-        return {
-          dept: dept.name,
-          avgTAT: deptOverdue.length > 0 
-            ? Number((deptOverdue.reduce((sum, a) => {
-                const daysDiff = Math.ceil((new Date().getTime() - new Date(a.due_date).getTime()) / (1000 * 60 * 60 * 24));
-                return sum + daysDiff;
-              }, 0) / deptOverdue.length).toFixed(1))
-            : 0,
-          slaBreaches: deptOverdue.length,
-          performance
-        };
-      });
+      const normalizeDate = (date: string | Date) => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      };
 
+
+      // const departmentTAT = departments.map(dept => {
+      //   const deptAssignments = assignments.filter(a =>
+      //     a.compliance?.department_code === dept.code
+      //   );
+
+
+
+      //   const deptOverdue = deptAssignments.filter(a => {
+      //     const dueDate = normalizeDate(a.due_date);
+      //     return dueDate < today && a.status !== 'approved';
+      //   });
+
+
+console.log("📌 Departments:", departments);
+console.log("📌 Assignments:", assignments);
+
+const uniqueDeptCodes = [...new Set(assignments.map(a => a.compliance?.department_code))];
+const departmentTAT = uniqueDeptCodes.map(code => {
+  // Find department name if exists, fallback to code
+  const deptObj = departments.find(d => d.code === code);
+  const deptName = deptObj?.name || code;
+
+  const deptAssignments = assignments.filter(a => a.compliance?.department_code === code);
+
+  console.log(`📌 Dept: ${deptName} - Assignments:`, deptAssignments);
+
+  const deptOverdue = deptAssignments.filter(a => {
+    const dueDate = normalizeDate(a.due_date);
+    const isOverdue = dueDate < today && a.status !== 'approved';
+    if (isOverdue) {
+      console.log(`⏰ Overdue Task:`, a);
+    }
+    return isOverdue;
+  });
+
+  const performance = deptAssignments.length > 0
+    ? Math.round(((deptAssignments.length - deptOverdue.length) / deptAssignments.length) * 100)
+    : 100;
+
+  const avgTAT = deptOverdue.length > 0
+    ? Number((deptOverdue.reduce((sum, a) => {
+        const daysDiff = Math.ceil(
+          (today.getTime() - normalizeDate(a.due_date).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        return sum + daysDiff;
+      }, 0) / deptOverdue.length).toFixed(1))
+    : 0;
+
+  console.log(`✅ Dept Summary: ${deptName}`, { avgTAT, slaBreaches: deptOverdue.length, performance });
+
+  return {
+    dept: deptName,
+    avgTAT,
+    slaBreaches: deptOverdue.length,
+    performance
+  };
+});
+
+console.log("📊 Department TAT Calculated:", departmentTAT);
+
+
+
+      // Upcoming deadlines
       const upcomingDeadlines = assignments
-        .filter(a => new Date(a.due_date) >= new Date() && a.status !== 'approved')
-        .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+        .filter(a => normalizeDate(a.due_date) >= today && a.status !== 'approved')
+        .sort((a, b) => normalizeDate(a.due_date).getTime() - normalizeDate(b.due_date).getTime())
         .slice(0, 10)
         .map(a => {
-          const daysLeft = Math.ceil((new Date(a.due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+          const dueDate = normalizeDate(a.due_date);
+          const daysLeft = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           const dept = departments.find(d => d.code === a.compliance?.department_code);
-          
+
           return {
+            id: a.id,
             task: a.compliance?.name || 'Compliance Task',
             dept: dept?.name || 'Unknown',
             daysLeft,
-            priority: daysLeft === 0 ? 'critical' as const : 
-                     daysLeft <= 1 ? 'high' as const : 
-                     daysLeft <= 3 ? 'medium' as const : 'low' as const
+            priority: daysLeft === 0 ? 'critical' as const :
+              daysLeft <= 1 ? 'high' as const :
+              daysLeft <= 3 ? 'medium' as const : 'low' as const
           };
         });
 
+      const dueTodayCount = upcomingDeadlines.filter(item => item.daysLeft === 0).length;
+
       const totalAssignments = Number(metrics.total_assignments);
-      const slaCompliance = totalAssignments > 0 
+      const slaCompliance = totalAssignments > 0
         ? Math.round(((totalAssignments - Number(metrics.tat_breaches)) / totalAssignments) * 100)
-        : 100;
+        : 0; // changed from 100 → 0 (avoid misleading)
 
       return {
         overallTAT: {
@@ -101,7 +191,8 @@ const TATMetrics = () => {
           totalCompliances: totalAssignments
         },
         departmentTAT,
-        upcomingDeadlines
+        upcomingDeadlines,
+        dueTodayCount
       };
     }
   });
@@ -111,14 +202,8 @@ const TATMetrics = () => {
       .channel('tat-metrics-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'compliance_assignments'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['tat-metrics'] });
-        }
+        { event: '*', schema: 'public', table: 'compliance_assignments' },
+        () => queryClient.invalidateQueries({ queryKey: ['tat-metrics'] })
       )
       .subscribe();
 
@@ -127,12 +212,13 @@ const TATMetrics = () => {
     };
   }, [queryClient]);
 
+  // Loading skeleton
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} 
-             className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-teal-500 border-teal-100 cursor-pointer">
+          <Card key={i}
+            className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-teal-500 border-teal-100 cursor-pointer animate-pulse">
             <CardHeader>
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
             </CardHeader>
@@ -145,6 +231,7 @@ const TATMetrics = () => {
     );
   }
 
+  // No data
   if (!tatData || tatData.slaCompliance.totalCompliances === 0) {
     return (
       <div className="hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-teal-500 border-teal-100 cursor-pointer space-y-8 bg-gray-50 p-6">
@@ -172,6 +259,7 @@ const TATMetrics = () => {
     <div className="space-y-8 bg-gray-50 p-6">
       {/* TAT Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Average TAT */}
         <Card className="hover:shadow-lg transition-all duration-300 bg-white border-gray-200">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -182,7 +270,9 @@ const TATMetrics = () => {
                 <CardTitle className="text-sm font-medium text-gray-700">Average TAT</CardTitle>
               </div>
               <Badge variant={tatData.overallTAT.trend === 'up' ? 'destructive' : 'default'} className="text-xs">
-                {tatData.overallTAT.trend === 'up' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {tatData.overallTAT.trend === 'up'
+                  ? <TrendingUp className="h-3 w-3" />
+                  : <TrendingDown className="h-3 w-3" />}
               </Badge>
             </div>
           </CardHeader>
@@ -193,6 +283,7 @@ const TATMetrics = () => {
           </CardContent>
         </Card>
 
+        {/* SLA Compliance */}
         <Card className="hover:shadow-lg transition-all duration-300 bg-white border-gray-200">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
@@ -209,6 +300,7 @@ const TATMetrics = () => {
           </CardContent>
         </Card>
 
+        {/* SLA Breaches */}
         <Card className="hover:shadow-lg transition-all duration-300 bg-white border-gray-200">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
@@ -224,6 +316,7 @@ const TATMetrics = () => {
           </CardContent>
         </Card>
 
+        {/* Due Today */}
         <Card className="hover:shadow-lg transition-all duration-300 bg-white border-gray-200">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
@@ -234,9 +327,7 @@ const TATMetrics = () => {
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-2xl font-bold text-gray-700 mb-1">
-              {tatData.upcomingDeadlines.filter(item => item.daysLeft === 0).length}
-            </div>
+            <div className="text-2xl font-bold text-gray-700 mb-1">{tatData.dueTodayCount}</div>
             <div className="text-xs text-gray-600">Require immediate action</div>
           </CardContent>
         </Card>
@@ -250,8 +341,8 @@ const TATMetrics = () => {
         </CardHeader>
         <CardContent className="bg-white">
           <div className="grid gap-4">
-            {tatData.departmentTAT.map((dept, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+            {tatData.departmentTAT.map(dept => (
+              <div key={dept.dept} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-gray-800 truncate">{dept.dept}</h4>
@@ -279,8 +370,8 @@ const TATMetrics = () => {
         </CardHeader>
         <CardContent className="bg-white">
           <div className="grid gap-3">
-            {tatData.upcomingDeadlines.map((deadline, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-l-4 border-l-blue-500">
+            {tatData.upcomingDeadlines.map(deadline => (
+              <div key={deadline.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-l-4 border-l-blue-500">
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-gray-800 truncate mb-1">{deadline.task}</h4>
                   <p className="text-sm text-gray-600">{deadline.dept}</p>
@@ -291,10 +382,10 @@ const TATMetrics = () => {
                       {deadline.daysLeft === 0 ? 'Due Today' : `${deadline.daysLeft} days left`}
                     </div>
                   </div>
-                  <Badge 
+                  <Badge
                     variant={
                       deadline.priority === 'critical' ? 'destructive' :
-                      deadline.priority === 'high' ? 'secondary' : 'outline'
+                        deadline.priority === 'high' ? 'secondary' : 'outline'
                     }
                     className="whitespace-nowrap"
                   >
