@@ -130,37 +130,49 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
   };
 
   return (
-    <div className="min-h-screen hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-700 to-blue-800 border-teal-100 cursor-pointer flex">
+   <div className="flex min-h-screen">
+  <aside className="sticky top-0 h-screen bg-gradient-to-br from-gray-700 to-blue-800 shadow-xl">
       <Sidebar 
         activeModule={activeModule} 
         setActiveModule={setActiveModule}
         userRole={userProfile?.role }
         availableModules={availableModules}
       />
-      <main className="flex-1 overflow-auto">
-          <div className="bg-#00BF47 border-b border-gray-200 px-6 py-3 flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Welcome, {userProfile?.full_name || user?.email} 
-              {userProfile?.role && (
-                <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
-                  isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue text-blue'
-                }`}>
-                  {userProfile.role}
-                </span>
-              )}
-            </div>
-            <Button 
-              onClick={handleLogout}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 text-gray-600 hover:text-red-600 hover:border-red-200"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        {renderActiveModule()}
-      </main>
+      </aside>
+    <main className="flex-1 flex flex-col">
+  {/* Sticky header */}
+  <div className="sticky top-0 bg-[#0D3B66]  px-6 py-3 flex justify-between items-center z-10">
+    <div className="text-sm text-white">
+      Welcome, {userProfile?.full_name || userProfile?.email}
+      {userProfile?.role && (
+        <span
+          className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+            isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+          }`}
+        >
+          {userProfile.email}
+        </span>
+      )}
+    </div>
+
+    <Button
+      onClick={handleLogout}
+      variant="outline"
+      size="sm"
+      className="flex items-center gap-2 text-gray-600 hover:text-red-600 hover:border-red-200"
+    >
+      <LogOut className="h-4 w-4" />
+      Logout
+    </Button>
+  </div>
+
+  {/* Scrollable content */}
+  <div className="flex-1 overflow-y-auto p-6">
+    {renderActiveModule()}
+  </div>
+</main>
+
+
     </div>
   );
 };
@@ -271,7 +283,7 @@ const UserDashboard: React.FC<{ userProfile?: any; onModuleChange: (module: stri
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fade-in">
+        {/* <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fade-in">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-blue-600 mb-2">
@@ -288,16 +300,13 @@ const UserDashboard: React.FC<{ userProfile?: any; onModuleChange: (module: stri
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Interactive Compliance Summary Cards for Users */}
-        <div className="space-y-6">
+        {/* <div className="space-y-6"> */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Your Compliance Overview</h2>
-              <p className="text-gray-600 text-sm">Track your compliance tasks and performance metrics - Click cards to navigate</p>
-            </div>
-          </div>
+            
+           {/* </div> */}
           
           <ComplianceSummaryCards onModuleChange={onModuleChange} />
         </div>

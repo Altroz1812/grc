@@ -1,329 +1,368 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Clock, User, Upload, Eye, CheckCircle, XCircle, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  Calendar, 
+  User, 
+  FileText, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock, 
+  Send,
+  Eye,
+  RotateCcw,
+  Upload,
+  UserPlus
+} from "lucide-react";
+import { format } from "date-fns";
+import { WorkflowItem } from "./WorkflowCard";
 
-interface WorkflowItem {
-  id: string;
-  compliance_id: string;
-  assigned_to: string;
-  checker_id: string | null;
-  due_date: string;
-  status: string;
-  maker_remarks?: string;
-  checker_remarks?: string;
-  document_url?: string;
-  priority?: string;
-  compliance?: {
-    name: string;
-    frequency: string;
-    category: string;
-  };
-  maker?: {
-    full_name: string;
-    email: string;
-  };
-  checker?: {
-    full_name: string;
-    email: string;
-  };
-}
-
-interface WorkflowCardProps {
-  item: WorkflowItem;
+interface WorkflowTableProps {
+  items: WorkflowItem[];
   userRole: string;
-  currentUserId: string;
+  currentUserId?: string;
+  onAction?: (action: string, item: WorkflowItem) => void;
+  onApprove?: (assignmentId: string) => Promise<void>;
+  onReject?: (assignmentId: string) => Promise<void>;
+  onSendBack?: (assignmentId: string, remarks: string) => Promise<void>;
   onUpload?: (assignmentId: string) => void;
-  onApprove?: (assignmentId: string) => void;
-  onReject?: (assignmentId: string) => void;
-  onSendBack?: (assignmentId: string, remarks: string) => void;
-  onAssign?: (complianceId: string, complianceName: string) => void;
+  onAssign?: (complianceId: string, compliance: any) => void;
 }
 
-export const WorkflowCard: React.FC<WorkflowCardProps> = ({
-  item,
-  userRole,
+export const WorkflowTable: React.FC<WorkflowTableProps> = ({ 
+  items,
+  userRole, 
   currentUserId,
-  onUpload,
-  onApprove,
-  onReject,
+  onAction,
+  onApprove, 
+  onReject, 
   onSendBack,
+  onUpload,
   onAssign
 }) => {
-  const [sendBackRemarks, setSendBackRemarks] = useState('');
-  const [showSendBackDialog, setShowSendBackDialog] = useState(false);
+  const [remarks, setRemarks] = useState('');
+  const [isRemarksDialogOpen, setIsRemarksDialogOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState('');
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'draft': return 'bg-gray-100 text-gray-800';
-      case 'submitted': return 'bg-blue-100 text-blue-800';
-      case 'approved': return 'bg-blue-100 text-blue-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'escalated': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+    switch (status.toLowerCase()) {
+      case 'draft': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'submitted': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'approved': return 'bg-green-100 text-green-800 border-green-200';
+      case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case 'critical': return 'text-red-600';
-      case 'high': return 'text-orange-600';
-      case 'medium': return 'text-blue-600';
-      case 'low': return 'text-green-600';
-      default: return 'text-gray-600';
+  const getPriorityColor = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'critical': return 'bg-red-500 text-white';
+      case 'high': return 'bg-orange-500 text-white';
+      case 'medium': return 'bg-yellow-500 text-white';
+      case 'low': return 'bg-green-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
-  const getPriorityIcon = (priority?: string) => {
-    switch (priority) {
-      case 'critical':
-      case 'high':
-        return AlertTriangle;
-      case 'medium':
-        return Clock;
-      case 'low':
-        return CheckCircle;
-      default:
-        return Clock;
+  const getPriorityIcon = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'critical': return <AlertTriangle className="h-3 w-3" />;
+      case 'high': return <AlertTriangle className="h-3 w-3" />;
+      default: return <Clock className="h-3 w-3" />;
     }
   };
 
-  const getUrgencyLevel = (dueDate: string) => {
-    const now = new Date();
-    const due = new Date(dueDate);
-    const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const handleSendBackWithRemarks = async () => {
+    if (onSendBack && remarks.trim() && selectedItemId) {
+      await onSendBack(selectedItemId, remarks);
+      setRemarks('');
+      setIsRemarksDialogOpen(false);
+      setSelectedItemId('');
+    }
+  };
+
+  const getActionButtons = (item: WorkflowItem) => {
+    const buttons = [];
+    const isMaker = userRole.toLowerCase() === 'maker';
+    const isChecker = userRole.toLowerCase() === 'checker';
     
-    if (diffDays < 0) return { level: 'overdue', color: 'text-red-600' };
-    if (diffDays <= 1) return { level: 'urgent', color: 'text-orange-600' };
-    if (diffDays <= 3) return { level: 'due-soon', color: 'text-blue-600' };
-    return { level: 'normal', color: 'text-green-600' };
-  };
+    // View button - always available
+    // buttons.push(
+    //   <Button
+    //     key="view"
+    //     variant="outline"
+    //     size="sm"
+    //     onClick={() => onAction?.('view', item)}
+    //     className="flex items-center gap-1"
+    //   >
+    //     <Eye className="h-3 w-3" />
+    //     View
+    //   </Button>
+    // );
 
-  const urgency = getUrgencyLevel(item.due_date);
-  const isAssigned = item.assigned_to !== null;
-  const PriorityIcon = getPriorityIcon(item.priority);
-  
-  // Check if current user can perform actions
-  const canUpload = item.assigned_to === currentUserId && (item.status === 'draft');
-  const canCheck = item.checker_id === currentUserId && item.status === 'submitted';
-  const canAssign = userRole === 'admin' && !isAssigned;
+    buttons.push(
+      <Button
+        key="submit"
+        variant="outline"
+        size="sm"
+        onClick={() => onAction?.('submit', item)}
+        className="flex items-center gap-1"
+      >
+        <Eye className="h-3 w-3" />
+        submit
+      </Button>
+    );
 
-  console.log('WorkflowCard - item:', item.id, 'currentUserId:', currentUserId, 'assigned_to:', item.assigned_to, 'checker_id:', item.checker_id);
-  console.log('WorkflowCard - canUpload:', canUpload, 'canCheck:', canCheck, 'canAssign:', canAssign);
-
-  const handleSendBack = () => {
-    if (onSendBack && sendBackRemarks.trim()) {
-      onSendBack(item.id, sendBackRemarks);
-      setSendBackRemarks('');
-      setShowSendBackDialog(false);
-    }
-  };
-
-  if (!isAssigned) {
-    // Unassigned task card
-    return (
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-2">
-              {item.compliance?.name || 'Compliance Task'}
-            </CardTitle>
-            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700">
-              Unassigned
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>ID: {item.compliance_id}</span>
-            <span>•</span>
-            <span>{item.compliance?.category}</span>
-          </div>
-        </CardHeader>
+    //    buttons.push(
+    //   <Button
+    //     key="resubmit"
+    //     variant="outline"
+    //     size="sm"
+    //     onClick={() => onAction?.('resubmit', item)}
+    //     className="flex items-center gap-1"
+    //   >
+    //     <RotateCcw className="h-3 w-3" />
         
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Calendar className="h-4 w-4" />
-            <span>Frequency: {item.compliance?.frequency}</span>
-          </div>
+    //   </Button>
+    // );
 
-          {canAssign && onAssign && (
-            <Button 
-              onClick={() => onAssign(item.compliance_id, item.compliance?.name || 'Compliance Task')}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              Smart Assign
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+    // Upload button for makers
+    if (isMaker && item.status === 'draft' && onUpload) {
+      buttons.push(
+        <Button
+          key="upload"
+          variant="outline"
+          size="sm"
+          onClick={() => onUpload(item.id)}
+          className="flex items-center gap-1"
+        >
+          <Upload className="h-3 w-3" />
+          Upload
+        </Button>
+      );
+    }
+
+    // Submit button for makers
+    if (isMaker && item.status === 'draft') {
+      buttons.push(
+        <Button
+          key="submit"
+          size="sm"
+          onClick={() => onAction?.('submit', item)}
+          className="flex items-center gap-1"
+        >
+          <Send className="h-3 w-3" />
+          Submit
+        </Button>
+      );
+    }
+
+    // Resubmit button for rejected items
+    if (isMaker && item.status === 'rejected') {
+      buttons.push(
+        <Button
+          key="resubmit"
+          size="sm"
+          onClick={() => onAction?.('resubmit', item)}
+          className="flex items-center gap-1"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Resubmit
+        </Button>
+      );
+    }
+
+    // Checker actions
+    if (isChecker && item.status === 'submitted') {
+      buttons.push(
+        <Button
+          key="approve"
+          size="sm"
+          onClick={() => onApprove?.(item.id)}
+          className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
+        >
+          <CheckCircle className="h-3 w-3" />
+          Approve
+        </Button>
+      );
+
+      buttons.push(
+        <Button
+          key="sendback"
+          variant="destructive"
+          size="sm"
+          className="flex items-center gap-1"
+          onClick={() => {
+            setSelectedItemId(item.id);
+            setIsRemarksDialogOpen(true);
+          }}
+        >
+          <RotateCcw className="h-3 w-3" />
+          Send Back
+        </Button>
+      );
+    }
+
+    // Assign button for unassigned items
+    if (onAssign && item.compliance) {
+      buttons.push(
+        <Button
+          key="assign"
+          size="sm"
+          onClick={() => onAssign(item.compliance_id, item.compliance)}
+          className="flex items-center gap-1"
+        >
+          <UserPlus className="h-3 w-3" />
+          Assign
+        </Button>
+      );
+    }
+
+    return buttons;
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="bg-background rounded-lg shadow-sm border border-border p-8">
+          <div className="text-muted-foreground mb-4">
+            <FileText className="w-16 h-16 mx-auto" />
+          </div>
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            No Tasks Found
+          </h3>
+          <p className="text-muted-foreground">No compliance tasks available at the moment.</p>
+        </div>
+      </div>
     );
   }
 
-  // Assigned task card
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-2">
-            {item.compliance?.name || 'Compliance Task'}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {item.priority && (
-              <div className="flex items-center gap-1">
-                <PriorityIcon className={`h-3 w-3 ${getPriorityColor(item.priority)}`} />
-                <span className={`text-xs font-medium ${getPriorityColor(item.priority)}`}>
-                  {item.priority?.charAt(0).toUpperCase() + item.priority?.slice(1)}
-                </span>
-              </div>
-            )}
-            <Badge className={getStatusColor(item.status)}>
-              {item.status === 'submitted' ? 'Submitted' : 
-               item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-            </Badge>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>ID: {item.compliance_id}</span>
-          <span>•</span>
-          <span>{item.compliance?.category}</span>
-          <span>•</span>
-          <span>{item.compliance?.frequency}</span>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Clock className={`h-4 w-4 ${urgency.color}`} />
-          <span className={`text-sm font-medium ${urgency.color}`}>
-            Due: {new Date(item.due_date).toLocaleDateString()}
-            {urgency.level === 'overdue' && ' (Overdue)'}
-            {urgency.level === 'urgent' && ' (Urgent)'}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <User className="h-4 w-4" />
-          <span>Maker: {item.maker?.full_name || 'Unassigned'}</span>
-          {item.assigned_to === currentUserId && (
-            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">You</Badge>
-          )}
-        </div>
-
-        {item.checker && (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <User className="h-4 w-4" />
-            <span>Checker: {item.checker.full_name}</span>
-            {item.checker_id === currentUserId && (
-              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">You</Badge>
-            )}
-          </div>
-        )}
-
-        {item.document_url && (
-          <div className="flex items-center gap-2 text-sm text-green-600">
-            <Upload className="h-4 w-4" />
-            <span>Document uploaded</span>
-          </div>
-        )}
-
-        {/* Show remarks if any */}
-        {item.maker_remarks && (
-          <div className="bg-blue-50 p-2 rounded text-sm">
-            <strong>Maker Notes:</strong> {item.maker_remarks}
-          </div>
-        )}
-
-        {item.checker_remarks && (
-          <div className="bg-purple-50 p-2 rounded text-sm">
-            <strong>Checker Notes:</strong> {item.checker_remarks}
-          </div>
-        )}
-
-        <div className="flex gap-2 mt-4">
-          {canUpload && onUpload && (
-            <Button 
-              onClick={() => onUpload(item.id)}
-              variant="outline" 
-              size="sm"
-              className="flex-1"
-            >
-              <Upload className="h-3 w-3 mr-1" />
-              Submit
-            </Button>
-          )}
-
-          {canCheck && onApprove && onReject && onSendBack && (
-            <>
-              <Button 
-                onClick={() => onApprove(item.id)}
-                variant="outline" 
-                size="sm"
-                className="flex-1 text-green-600 hover:text-green-700"
-              >
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Approve
-              </Button>
-              
-              <Dialog open={showSendBackDialog} onOpenChange={setShowSendBackDialog}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex-1 text-orange-600 hover:text-orange-700"
-                  >
-                    <ArrowLeft className="h-3 w-3 mr-1" />
-                    Send Back
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Send Back to Maker</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
-                      Provide feedback for the maker to address before resubmission:
-                    </p>
-                    <Textarea
-                      placeholder="Enter your feedback and reasons for sending back..."
-                      value={sendBackRemarks}
-                      onChange={(e) => setSendBackRemarks(e.target.value)}
-                      rows={4}
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowSendBackDialog(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSendBack}
-                        disabled={!sendBackRemarks.trim()}
-                        className="bg-orange-600 hover:bg-orange-700"
-                      >
-                        Send Back
-                      </Button>
-                    </div>
+    <div className="space-y-4">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Compliance</TableHead>
+            <TableHead>Priority</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Due Date</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Maker</TableHead>
+            <TableHead>Checker</TableHead>
+            <TableHead>Submitted</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell>
+                <div className="space-y-1">
+                  <div className="font-medium text-foreground">
+                    {item.compliance?.name || 'Compliance Task'}
                   </div>
-                </DialogContent>
-              </Dialog>
+                  {item.compliance?.compliance_id && (
+                    <Badge variant="outline" className="text-xs">
+                      {item.compliance.compliance_id}
+                    </Badge>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge className={`${getPriorityColor(item.priority || 'low')} flex items-center gap-1 w-fit`}>
+                  {getPriorityIcon(item.priority || 'low')}
+                  {item.priority || 'low'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className={getStatusColor(item.status)}>
+                  {item.status}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1 text-sm">
+                  <Calendar className="h-3 w-3 text-muted-foreground" />
+                  {item.due_date ? format(new Date(item.due_date), 'MMM dd, yyyy') : 'No due date'}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1 text-sm">
+                  <FileText className="h-3 w-3 text-muted-foreground" />
+                  {item.compliance?.category || 'General'}
+                </div>
+              </TableCell>
+              <TableCell>
+                {item.maker ? (
+                  <div className="flex items-center gap-1 text-sm">
+                    <User className="h-3 w-3 text-muted-foreground" />
+                    {item.maker.full_name}
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground text-sm">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {item.checker ? (
+                  <div className="flex items-center gap-1 text-sm">
+                    <User className="h-3 w-3 text-muted-foreground" />
+                    {item.checker.full_name}
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground text-sm">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {item.submitted_at && !isNaN(new Date(item.submitted_at).getTime()) ? (
+                  <span className="text-sm">{format(new Date(item.submitted_at), 'MMM dd, HH:mm')}</span>
+                ) : (
+                  <span className="text-muted-foreground text-sm">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  {getActionButtons(item)}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
-              <Button 
-                onClick={() => onReject(item.id)}
-                variant="outline" 
-                size="sm"
-                className="flex-1 text-red-600 hover:text-red-700"
+      <Dialog open={isRemarksDialogOpen} onOpenChange={setIsRemarksDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Back with Remarks</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Enter your remarks..."
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              rows={4}
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsRemarksDialogOpen(false);
+                  setSelectedItemId('');
+                  setRemarks('');
+                }}
               >
-                <XCircle className="h-3 w-3 mr-1" />
-                Reject
+                Cancel
               </Button>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+              <Button
+                onClick={handleSendBackWithRemarks}
+                disabled={!remarks.trim()}
+              >
+                Send Back
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
-};

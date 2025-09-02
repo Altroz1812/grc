@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WorkflowTabs } from './workflow/WorkflowTabs';
 import { SmartAssignment } from './workflow/SmartAssignment';
 import { FileUploadDialog } from './workflow/FileUploadDialog';
-import { WorkflowCard } from './workflow/WorkflowCard';
+import { WorkflowTable } from './workflow/WorkflowTable';
 import { WorkflowFilters } from './workflow/WorkflowFilters';
 
 interface WorkflowItem {
@@ -24,14 +25,19 @@ interface WorkflowItem {
     name: string;
     frequency: string;
     category: string;
+    compliance_id?: string;
   };
   maker?: {
+    id: string;
     full_name: string;
     email: string;
+    user_role: string;
   };
   checker?: {
+    id: string;
     full_name: string;
     email: string;
+    user_role: string;
   };
 }
 
@@ -187,6 +193,22 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
     }
   };
 
+  // Helper function to extract user data safely
+  const extractUserData = (userData: any) => {
+    if (!userData) return null;
+    
+    // Handle both array and single object responses
+    const user = Array.isArray(userData) ? userData[0] : userData;
+    if (!user) return null;
+    
+    return {
+      id: user.id,
+      full_name: user.full_name || user.name || 'Unknown',
+      email: user.email || 'Unknown',
+      user_role: user.user_role || user.role_name || 'user'
+    };
+  };
+
   const fetchWorkflowItems = async (employee?: any) => {
     try {
       setLoading(true);
@@ -208,8 +230,7 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
         .from('compliance_user_assignments')
         .select(`
           *,
-          compliance:compliances(*),
-          user:employees!compliance_user_assignments_user_id_fkey(id, name, email, role_name)
+          compliance:compliances(*)
         `)
         .eq('user_id', emp.id)
         .eq('status', 'active');
@@ -242,9 +263,7 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
             updated_at,
             submitted_at,
             completed_at,
-            compliance:compliances(*),
-            maker:employees!compliance_assignments_assigned_to_fkey(id, name, email, role_name),
-            checker:employees!compliance_assignments_checker_id_fkey(id, name, email, role_name)
+            compliance:compliances(*)
           `)
           .in('compliance_id', complianceIds);
 
@@ -266,9 +285,9 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
             
             // Find checker for this compliance (could be another user with checker role)
             const { data: checkers } = await supabase
-              .from('employees')
+              .from('profiles')
               .select('*')
-              .eq('role_name', 'checker')
+              .eq('user_role', 'checker')
               .eq('status', 'active')
               .limit(1);
 
@@ -298,9 +317,7 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
                 updated_at,
                 submitted_at,
                 completed_at,
-                compliance:compliances(*),
-                maker:employees!compliance_assignments_assigned_to_fkey(id, name, email, role_name),
-                checker:employees!compliance_assignments_checker_id_fkey(id, name, email, role_name)
+                compliance:compliances(*)
               `)
               .single();
 
@@ -322,6 +339,28 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
             else if (diffDays <= 1) priority = 'high';
             else if (diffDays <= 3) priority = 'medium';
 
+            // Fetch maker and checker details separately
+            let maker = null;
+            let checker = null;
+            
+            if (complianceAssignment.assigned_to) {
+              const { data: makerData } = await supabase
+                .from('profiles')
+                .select('id, full_name, email, user_role')
+                .eq('id', complianceAssignment.assigned_to)
+                .single();
+              maker = makerData;
+            }
+            
+            if (complianceAssignment.checker_id) {
+              const { data: checkerData } = await supabase
+                .from('profiles')
+                .select('id, full_name, email, user_role')
+                .eq('id', complianceAssignment.checker_id)
+                .single();
+              checker = checkerData;
+            }
+
             const workflowItem: WorkflowItem = {
               id: complianceAssignment.id,
               compliance_id: userAssignment.compliance_id,
@@ -335,20 +374,15 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
               submitted_at: complianceAssignment.submitted_at,
               completed_at: complianceAssignment.completed_at,
               priority,
-              compliance: {
-                name: userAssignment.compliance?.name || 'Unknown Compliance',
-                frequency: userAssignment.compliance?.frequency || 'Unknown',
-                category: userAssignment.compliance?.category || 'General'
-              },
-              maker: complianceAssignment.maker ? {
-                full_name: complianceAssignment.maker.name,
-                email: complianceAssignment.maker.email
-              } : null,
-              checker: complianceAssignment.checker ? {
-                full_name: complianceAssignment.checker.name,
-                email: complianceAssignment.checker.email
-              } : null
-            };
+               compliance: {
+                 name: userAssignment.compliance?.name || 'Unknown Compliance',
+                 frequency: userAssignment.compliance?.frequency || 'Unknown',
+                 category: userAssignment.compliance?.category || 'General',
+                 compliance_id: userAssignment.compliance?.compliance_id || userAssignment.compliance_id
+                },
+               maker: extractUserData(maker),
+               checker: extractUserData(checker)
+             };
 
             // Apply role-based filtering
             const userRoleInCompliance = emp.role_name?.toLowerCase();
@@ -400,11 +434,12 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
             due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             status: 'unassigned',
             priority: 'medium',
-            compliance: {
-              name: compliance.name,
-              frequency: compliance.frequency,
-              category: compliance.category
-            }
+             compliance: {
+               name: compliance.name,
+               frequency: compliance.frequency,
+               category: compliance.category,
+               compliance_id: compliance.compliance_id
+             }
           })) || [];
         }
       }
@@ -464,6 +499,18 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
   const handleUpload = (assignmentId: string) => {
     setSelectedAssignmentId(assignmentId);
     setShowUpload(true);
+  };
+
+  // Get current assignment data for the dialog
+  const getCurrentAssignmentData = () => {
+    const assignment = workflowItems.find(item => item.id === selectedAssignmentId);
+    return {
+      makerRemarks: assignment?.maker_remarks || '',
+      checkerRemarks: assignment?.checker_remarks || '',
+      status: assignment?.status || 'draft',
+      fileUrl: assignment?.document_url || '',
+      fileName: assignment?.document_url ? assignment.document_url.split('/').pop() || 'Document' : ''
+    };
   };
 
   const handleAssign = (complianceId: string, complianceName: string) => {
@@ -557,6 +604,30 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
     }
   };
 
+  const handleAction = (action: string, item: WorkflowItem) => {
+    switch (action) {
+      case 'view':
+        // For now, show a toast with compliance details
+        toast({
+          title: item.compliance?.name || 'Compliance Task',
+          description: `Status: ${item.status} | Due: ${item.due_date} | Priority: ${item.priority}`,
+        });
+        break;
+      case 'submit':
+        if (item.id) {
+          handleUpload(item.id);
+        }
+        break;
+      case 'resubmit':
+        if (item.id) {
+          handleUpload(item.id);
+        }
+        break;
+      default:
+        console.log('Unknown action:', action);
+    }
+  };
+
   const handleSubmitAsMaker = async (assignmentId: string, remarks: string, file: File | null) => {
     try {
       setLoading(true);
@@ -630,7 +701,28 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
     }
   };
 
-  const assignedItems = filteredItems.filter(item => item.assigned_to !== null);
+  // Filter items by status for different tabs
+  const assignedItems = filteredItems.filter(item => 
+    item.assigned_to !== null && 
+    !['approved', 'completed', 'rejected'].includes(item.status)
+  );
+  
+  const completedItems = filteredItems.filter(item => 
+    ['approved', 'completed'].includes(item.status)
+  );
+  
+  const overdueItems = filteredItems.filter(item => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(item.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    return dueDate < today && !['approved', 'completed'].includes(item.status);
+  });
+  
+  const sendbackItems = filteredItems.filter(item => 
+    item.status === 'rejected' || (item.status === 'draft' && item.checker_remarks)
+  );
+  
   const unassignedItems = filteredItems.filter(item => item.assigned_to === null);
 
   if (loading) {
@@ -645,15 +737,15 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          {/* <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {isAdmin ? 'Maker-Checker Workflow Management' : 'My Worklist'}
-          </h1>
-          <p className="text-gray-600">
+          </h1> */}
+          {/* <p className="text-gray-600">
             {isAdmin 
               ? 'Smart assignment and compliance workflow management' 
               : `Your assigned compliance tasks and workflow (Employee: ${currentEmployee?.id || 'Not found'})`
             }
-          </p>
+          </p> */}
           {!isAdmin && (
             <div className="mt-2 text-sm text-gray-500">
               Email: {userProfile?.email} | Role: {currentEmployee?.role_name || userRole} | Tasks: {assignedItems.length}
@@ -672,79 +764,134 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
           <WorkflowTabs
             assignedItems={assignedItems}
             unassignedItems={unassignedItems}
+            completedItems={completedItems}
+            overdueItems={overdueItems}
+            sendbackItems={sendbackItems}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            isAdmin={isAdmin}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeTab === 'assigned' ? (
-                assignedItems.length === 0 ? (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-gray-500">No assigned tasks found</p>
-                  </div>
-                ) : (
-                  assignedItems.map(item => (
-                    <WorkflowCard
-                      key={item.id}
-                      item={item}
-                      userRole={userRole}
-                      currentUserId={currentEmployee?.id || ''}
-                      onUpload={handleUpload}
-                      onApprove={handleApprove}
-                      onReject={handleReject}
-                      onSendBack={handleSendBack}
-                    />
-                  ))
-                )
-              ) : (
-                unassignedItems.length === 0 ? (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-gray-500">No unassigned tasks found</p>
-                  </div>
-                ) : (
-                  unassignedItems.map(item => (
-                    <WorkflowCard
-                      key={item.id}
-                      item={item}
-                      userRole={userRole}
-                      currentUserId={currentEmployee?.id || ''}
-                      onAssign={handleAssign}
-                    />
-                  ))
-                )
-              )}
+            <div className="w-full">
+              {(() => {
+                let currentItems = [];
+                let emptyMessage = "";
+                
+                switch(activeTab) {
+                  case 'assigned':
+                    currentItems = assignedItems;
+                    emptyMessage = "No assigned tasks found";
+                    break;
+                  case 'completed':
+                    currentItems = completedItems;
+                    emptyMessage = "No completed tasks found";
+                    break;
+                  case 'overdue':
+                    currentItems = overdueItems;
+                    emptyMessage = "No overdue tasks found";
+                    break;
+                  case 'sendback':
+                    currentItems = sendbackItems;
+                    emptyMessage = "No sendback tasks found";
+                    break;
+                  case 'unassigned':
+                    currentItems = unassignedItems;
+                    emptyMessage = "No unassigned tasks found";
+                    break;
+                  default:
+                    currentItems = assignedItems;
+                    emptyMessage = "No tasks found";
+                }
+
+                return (
+                  <WorkflowTable
+                    items={currentItems}
+                    userRole={userRole}
+                    currentUserId={currentEmployee?.id || ''}
+                    onAction={handleAction}
+                    onUpload={activeTab === 'unassigned' ? undefined : handleUpload}
+                    onApprove={handleApprove}
+                    onReject={handleReject}
+                    onSendBack={handleSendBack}
+                    onAssign={activeTab === 'unassigned' ? handleAssign : undefined}
+                  />
+                );
+              })()}
             </div>
           </WorkflowTabs>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assignedItems.length === 0 ? (
-              <div className="col-span-full text-center py-12">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-                  <div className="text-gray-400 mb-4">
-                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Tasks Assigned</h3>
-                  <p className="text-gray-500">
-                    You don't have any compliance tasks assigned to you at the moment.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              assignedItems.map(item => (
-                <WorkflowCard
-                  key={item.id}
-                  item={item}
-                  userRole={userRole}
-                  currentUserId={currentEmployee?.id || ''}
-                  onUpload={handleUpload}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                  onSendBack={handleSendBack}
-                />
-              ))
-            )}
-          </div>
+          <WorkflowTabs
+            assignedItems={assignedItems}
+            unassignedItems={[]}
+            completedItems={completedItems}
+            overdueItems={overdueItems}
+            sendbackItems={sendbackItems}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            isAdmin={isAdmin}
+          >
+            <div className="w-full">
+              {(() => {
+                let currentItems = [];
+                let emptyMessage = "";
+                let emptyIcon = null;
+                
+                switch(activeTab) {
+                  case 'assigned':
+                    currentItems = assignedItems;
+                    emptyMessage = "You don't have any active compliance tasks assigned to you at the moment.";
+                    emptyIcon = (
+                      <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    );
+                    break;
+                  case 'completed':
+                    currentItems = completedItems;
+                    emptyMessage = "No completed tasks found.";
+                    emptyIcon = (
+                      <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    );
+                    break;
+                  case 'overdue':
+                    currentItems = overdueItems;
+                    emptyMessage = "No overdue tasks found.";
+                    emptyIcon = (
+                      <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    );
+                    break;
+                  case 'sendback':
+                    currentItems = sendbackItems;
+                    emptyMessage = "No tasks sent back for revision.";
+                    emptyIcon = (
+                      <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                      </svg>
+                    );
+                    break;
+                  default:
+                    currentItems = assignedItems;
+                    emptyMessage = "No tasks found.";
+                }
+
+                return (
+                  <WorkflowTable
+                    items={currentItems}
+                    userRole={userRole}
+                    currentUserId={currentEmployee?.id || ''}
+                    onAction={handleAction}
+                    onUpload={handleUpload}
+                    onApprove={handleApprove}
+                    onReject={handleReject}
+                    onSendBack={handleSendBack}
+                  />
+                );
+              })()}
+            </div>
+          </WorkflowTabs>
         )}
 
         {selectedCompliance && (
@@ -769,6 +916,12 @@ const MakerCheckerWorkflow: React.FC<MakerCheckerWorkflowProps> = ({ userProfile
           assignmentId={selectedAssignmentId}
           onUploadComplete={() => fetchWorkflowItems()}
           onSubmit={handleSubmitAsMaker}
+          userRole={userRole}
+          existingMakerRemarks={getCurrentAssignmentData().makerRemarks}
+          existingCheckerRemarks={getCurrentAssignmentData().checkerRemarks}
+          workflowStatus={getCurrentAssignmentData().status}
+          existingFileUrl={getCurrentAssignmentData().fileUrl}
+          existingFileName={getCurrentAssignmentData().fileName}
         />
       </div>
     </div>

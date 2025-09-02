@@ -157,16 +157,16 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <motion.div 
-      className="min-h-screen bg-gradient-to-br from-gray-700 to-blue-800 text-white overflow-hidden"
+      className="min-h-screen bg-[#0D3B66] text-white overflow-hidden position: relative"
       variants={sidebarVariants}
       animate={isOpen ? "open" : "closed"}
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
-      <div className="relative h-full">
+      <div className="relative h-full sticky">
         {/* Toggle Button */}
         <motion.button
-          className="absolute top-4 right-[-16px] bg-gradient-to-r from-emerald-600 to-blue-800 rounded-full p-2 z-10 shadow-lg"
+          className="absolute top-4 right-[-16px] bg-[#0D3B66] rounded-full p-2 z-10 shadow-lg"
           variants={toggleVariants}
           whileHover="hover"
           whileTap="tap"
@@ -188,7 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               variants={textVariants}
               animate={isOpen ? "open" : "closed"}
             >
-              <p>Welcome, {userProfile?.full_name || userProfile?.email || 'User'}</p>
+              <p>Vigilant</p>
               {effectiveRoleName && effectiveRoleName !== 'user' && (
                 <span className={`mt-1 inline-block px-2 py-1 rounded text-xs font-medium ${
                   isAdmin ? 'bg-red-600 text-slate-400' : 'bg-blue-600 text-slate-400'
@@ -202,7 +202,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               variants={textVariants}
               animate={isOpen ? "open" : "closed"}
             >
-              <Button
+              {/* <Button
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
@@ -210,7 +210,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               >
                 <LogOut className="h-4 w-4" />
                 Logout
-              </Button>
+              </Button> */}
             </motion.div>
           </div>
         </motion.div>

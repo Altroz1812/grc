@@ -72,11 +72,11 @@ export const WorkflowFilters: React.FC<WorkflowFiltersProps> = ({
   const hasActiveFilters = Object.values(filters).some(value => value !== 'all');
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-4 bg-blue-100">
       <CardContent className="p-4">
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-1">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-500" />
+            <Filter className="h-2 w-4 text-gray-500" />
             <span className="text-sm font-medium text-gray-700">Filters</span>
           </div>
           {hasActiveFilters && (
