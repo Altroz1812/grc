@@ -12,6 +12,8 @@ import ComplianceSummaryCards from '../components/ComplianceSummaryCards';
 import ReportEngine from '../components/ReportEngine';
 import UserManagement from '../components/UserManagement';
 import MakerCheckerWorkflow from '../components/MakerCheckerWorkflow';
+import HeaderNotifications from '../components/HeaderNotifications';
+import NotificationCenter from '../components/NotificationCenter';
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,7 +90,7 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
         dashboard: true,
         calendar: true,
         workflow: true,
-        reports: false,
+        reports: true,
         departments: false,
         employees: false,
         compliance: false,
@@ -118,94 +120,107 @@ const Index: React.FC<IndexProps> = ({ userProfile, currentUser }) => {
       case "calendar":
         return <ComplianceCalendar />;
       case "reports":
-        return isAdmin ? <ReportEngine /> : <UserDashboard userProfile={userProfile} onModuleChange={setActiveModule} />;
+        return <ReportEngine userProfile={userProfile} />;
       case "users":
         return isAdmin ? <UserManagement /> : <UserDashboard userProfile={userProfile} onModuleChange={setActiveModule} />;
       case "workflow":
         return <MakerCheckerWorkflow userProfile={userProfile} />;
+      case "notifications":
+        return <NotificationCenter />;
       case "dashboard":
       default:
-        return isAdmin ? <AdminDashboard onModuleChange={setActiveModule} /> : <UserDashboard userProfile={userProfile} onModuleChange={setActiveModule} />;
+        return isAdmin ? <AdminDashboard userProfile={userProfile} onModuleChange={setActiveModule} /> : <UserDashboard userProfile={userProfile} onModuleChange={setActiveModule} />;
     }
   };
 
   return (
-   <div className="flex min-h-screen">
-  <aside className="sticky top-0 h-screen bg-gradient-to-br from-gray-700 to-blue-800 shadow-xl">
+    <div className="min-h-screen bg-gray-50 flex">
       <Sidebar 
         activeModule={activeModule} 
         setActiveModule={setActiveModule}
-        userRole={userProfile?.role }
+        userRole={userProfile?.role || 'user'}
         availableModules={availableModules}
       />
-      </aside>
-    <main className="flex-1 flex flex-col">
-  {/* Sticky header */}
-  <div className="sticky top-0 bg-[#0D3B66]  px-6 py-3 flex justify-between items-center z-10">
-    <div className="text-sm text-white">
-      Welcome, {userProfile?.full_name || userProfile?.email}
-      {userProfile?.role && (
-        <span
-          className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
-            isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-          }`}
-        >
-          {userProfile.email}
-        </span>
-      )}
-    </div>
-
-    <Button
-      onClick={handleLogout}
-      variant="outline"
-      size="sm"
-      className="flex items-center gap-2 text-gray-600 hover:text-red-600 hover:border-red-200"
-    >
-      <LogOut className="h-4 w-4" />
-      Logout
-    </Button>
-  </div>
-
-  {/* Scrollable content */}
-  <div className="flex-1 overflow-y-auto p-6">
-    {renderActiveModule()}
-  </div>
-</main>
-
-
+      <main className="flex-1 overflow-auto">
+        <div className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            Welcome, {userProfile?.full_name || user?.email} 
+            {userProfile?.role && (
+              <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+              }`}>
+                {userProfile.role}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <HeaderNotifications 
+              userId={userProfile?.id || user?.id}
+              onNotificationClick={() => setActiveModule('notifications')}
+            />
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-gray-600 hover:text-red-600 hover:border-red-200"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+        </div>
+        {renderActiveModule()}
+      </main>
     </div>
   );
 };
 
-const AdminDashboard: React.FC<{ onModuleChange: (module: string) => void }> = ({ onModuleChange }) => {
+const AdminDashboard: React.FC<{ userProfile?: any; onModuleChange: (module: string) => void }> = ({ userProfile, onModuleChange }) => {
   return (
-    <div className="min-h-screen bg-#00BF47-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Header */}
-       
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-red-600 mb-2">
+                Admin Dashboard
+              </h1>
+              <p className="text-gray-600 text-base">
+                Complete administrative control and comprehensive compliance analytics
+              </p>
+            </div>
+            <div className="text-right bg-red-50 rounded-lg p-3 border border-red-200">
+              <div className="text-xs text-red-600 font-medium">Administrator</div>
+              <div className="text-sm font-semibold text-gray-700">
+                Full Access
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Interactive Compliance Summary Cards */}
-        <div className="space-y-4">
-          {/* <div className="bg-green rounded-xl shadow-sm border border-gray-200 p-2">
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-gray-800 mb-2">Compliance Overview</h2>
               <p className="text-gray-600 text-sm">Real-time compliance metrics - Click cards to navigate to modules</p>
             </div>
-          </div> */}
+          </div>
           
-          <ComplianceSummaryCards onModuleChange={onModuleChange} />
+          <ComplianceSummaryCards onModuleChange={onModuleChange} userProfile={userProfile} />
         </div>
 
         {/* TAT Metrics Section */}
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-gray-700 to-blue-900 border-blue-100 rounded-xl shadow-sm border border-gray-200 p-1">
-            <div className="mb-4">
-              <h2 className="text-xl font-bold text-slate-400 mb-2">TAT Performance Metrics</h2>
-              <p className="text-gray-400 text-sm">Turn-around time analysis and SLA compliance tracking</p>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">TAT Performance Metrics</h2>
+              <p className="text-gray-600 text-sm">Turn-around time analysis and SLA compliance tracking</p>
             </div>
           </div>
           
-          <TATMetrics />
+          <TATMetrics userProfile={userProfile} />
         </div>
 
         {/* Comprehensive Analytics */}
@@ -217,11 +232,11 @@ const AdminDashboard: React.FC<{ onModuleChange: (module: string) => void }> = (
             </div>
           </div>
           
-          <ComplianceAnalytics />
+          <ComplianceAnalytics userProfile={userProfile} />
         </div>
 
         {/* Interactive Admin Quick Actions */}
-        {/* <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-800 mb-2">Administrative Actions</h2>
             <p className="text-gray-600 text-sm">Quick access to system management modules</p>
@@ -272,7 +287,7 @@ const AdminDashboard: React.FC<{ onModuleChange: (module: string) => void }> = (
               <p className="text-sm text-gray-600">Manage user accounts and roles</p>
             </div>
           </div>
-        </div> */}
+        </div>
       </div>
     </div>
   );
@@ -283,7 +298,7 @@ const UserDashboard: React.FC<{ userProfile?: any; onModuleChange: (module: stri
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Header */}
-        {/* <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fade-in">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fade-in">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-blue-600 mb-2">
@@ -300,15 +315,18 @@ const UserDashboard: React.FC<{ userProfile?: any; onModuleChange: (module: stri
               </div>
             </div>
           </div>
-        </div> */}
+        </div>
 
         {/* Interactive Compliance Summary Cards for Users */}
-        {/* <div className="space-y-6"> */}
+        <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            
-           {/* </div> */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Your Compliance Overview</h2>
+              <p className="text-gray-600 text-sm">Track your compliance tasks and performance metrics - Click cards to navigate</p>
+            </div>
+          </div>
           
-          <ComplianceSummaryCards onModuleChange={onModuleChange} />
+          <ComplianceSummaryCards onModuleChange={onModuleChange} userProfile={userProfile} />
         </div>
 
         {/* Interactive User Quick Actions */}
@@ -363,7 +381,7 @@ const UserDashboard: React.FC<{ userProfile?: any; onModuleChange: (module: stri
             </div>
           </div>
           
-          <TATMetrics />
+          <TATMetrics userProfile={userProfile} />
         </div>
       </div>
     </div>

@@ -157,7 +157,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <motion.div 
-      className="min-h-screen bg-[#0D3B66] text-white overflow-hidden position: relative"
+      className="min-h-screen bg-[#0E2144] text-white overflow-hidden position: relative"
       variants={sidebarVariants}
       animate={isOpen ? "open" : "closed"}
       onMouseEnter={() => setIsOpen(true)}
@@ -166,7 +166,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="relative h-full sticky">
         {/* Toggle Button */}
         <motion.button
-          className="absolute top-4 right-[-16px] bg-[#0D3B66] rounded-full p-2 z-10 shadow-lg"
+          className="absolute top-4 right-[-8px] bg-[#0D3B66] rounded-full p-2 z-2 shadow-lg"
           variants={toggleVariants}
           whileHover="hover"
           whileTap="tap"
@@ -188,17 +188,28 @@ const Sidebar: React.FC<SidebarProps> = ({
               variants={textVariants}
               animate={isOpen ? "open" : "closed"}
             >
-              <p>Vigilant</p>
-              {effectiveRoleName && effectiveRoleName !== 'user' && (
+              {/* <p>Vigilant</p> */}
+              {/* <div className="flex items-center space-x-4"> */}
+      {/* Logo from public folder */}
+      {/* <img 
+        src="/vigilant.png" 
+        alt="Vigilant Logo" 
+        className="h-auto w-48"
+      /> */}
+
+      {/* Text */}
+      <p className="text-green text-lg font-bold">Vigilant</p>
+    {/* </div> */}
+              {/* {effectiveRoleName && effectiveRoleName !== 'user' && (
                 <span className={`mt-1 inline-block px-2 py-1 rounded text-xs font-medium ${
                   isAdmin ? 'bg-red-600 text-slate-400' : 'bg-blue-600 text-slate-400'
                 }`}>
                   {effectiveRoleName}
                 </span>
-              )}
+              )} */}
             </motion.div>
             <motion.div
-              className="mt-4"
+              className="mt-1"
               variants={textVariants}
               animate={isOpen ? "open" : "closed"}
             >
@@ -216,11 +227,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         </motion.div>
 
         {/* Navigation */}
-        <nav className="mt-6 px-3">
+        <nav className="mt-1 px-1">
           {/* User Sections */}
-          <div className="mb-6">
+          <div className="mb-1">
             <motion.h3 
-              className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2"
+              className="px-1 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1"
               variants={textVariants}
               animate={isOpen ? "open" : "closed"}
             >
@@ -234,7 +245,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <motion.button
                     key={item.id}
                     onClick={() => setActiveModule(item.id)}
-                    className={`w-full flex items-center px-3 py-2 text-sm font-semibold rounded-lg mb-1 transition-colors relative overflow-hidden ${
+                    className={`w-full flex items-center px-1 py-1 text-sm font-semibold rounded-lg mb-1 transition-colors relative overflow-hidden ${
                       activeModule === item.id
                         ? "bg-gradient-to-r from-emerald-600/30 to-yellow-400/30 text-emerald-300 border-r-4 border-yellow-400 shadow-glow"
                         : "text-white hover:bg-gradient-to-r from-emerald-600/20 to-yellow-400/20"

@@ -45,16 +45,66 @@ interface ReportData {
   }>;
 }
 
-const ReportEngine = () => {
+interface ReportEngineProps {
+  userProfile?: {
+    id: string;
+    role?: string;
+    user_role?: string;
+    department_code?: string;
+    full_name?: string;
+  };
+}
+
+const ReportEngine = ({ userProfile }: ReportEngineProps) => {
   const [selectedReport, setSelectedReport] = useState("tat");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Get available reports based on user role
+  const getAvailableReports = () => {
+    const userRole = userProfile?.user_role;
+    const role = userProfile?.role;
+    
+    if (role === 'admin') {
+      return [
+        { key: "tat", label: "TAT Report", icon: TrendingUp },
+        { key: "department", label: "Department Status", icon: Users },
+        { key: "performance", label: "Employee Performance", icon: BarChart3 },
+        { key: "escalation", label: "Escalation Summary", icon: AlertTriangle },
+        { key: "compliance-officer", label: "Compliance Overview", icon: FileText },
+        { key: "audit", label: "Audit Trail", icon: Calendar }
+      ];
+    }
+    
+    if (userRole === 'checker') {
+      return [
+        { key: "tat", label: "My TAT Report", icon: TrendingUp },
+        { key: "checker-assignments", label: "My Checker Assignments", icon: FileText },
+        { key: "department", label: "Department Status", icon: Users }
+      ];
+    }
+    
+    if (userRole === 'maker') {
+      return [
+        { key: "tat", label: "My TAT Report", icon: TrendingUp },
+        { key: "maker-assignments", label: "My Assignments", icon: FileText }
+      ];
+    }
+    
+    // Default reports for other roles
+    return [
+      { key: "tat", label: "TAT Report", icon: TrendingUp },
+      { key: "department", label: "Department Status", icon: Users }
+    ];
+  };
+
+  const availableReports = getAvailableReports();
+
   // Real-time data from database
   const { data: reportData, isLoading } = useQuery({
-    queryKey: ['reports', selectedReport, dateRange, selectedDepartment],
+    queryKey: ['reports', selectedReport, dateRange, selectedDepartment, userProfile?.id],
     queryFn: async (): Promise<ReportData> => {
       // Get compliance assignments with related data
       let assignmentsQuery = supabase
@@ -65,6 +115,23 @@ const ReportEngine = () => {
           assigned_employee:employees!compliance_assignments_assigned_to_fkey(name, department_code),
           checker_employee:employees!compliance_assignments_checker_id_fkey(name)
         `);
+
+      // Apply role-based filtering
+      const userRole = userProfile?.user_role;
+      const role = userProfile?.role;
+      
+      if (role !== 'admin') {
+        if (userRole === 'maker') {
+          // Makers can only see their own assignments
+          assignmentsQuery = assignmentsQuery.eq('assigned_to', userProfile?.id);
+        } else if (userRole === 'checker') {
+          // Checkers can see assignments they need to check + their department
+          assignmentsQuery = assignmentsQuery.or(`checker_id.eq.${userProfile?.id},compliance.department_code.eq.${userProfile?.department_code}`);
+        } else if (userProfile?.department_code) {
+          // Department heads can see their department's assignments
+          assignmentsQuery = assignmentsQuery.eq('compliance.department_code', userProfile.department_code);
+        }
+      }
 
       // Apply date filter if provided
       if (dateRange?.from) {
@@ -242,35 +309,70 @@ const ReportEngine = () => {
   }, [queryClient]);
 
   const exportToExcel = (reportType: string) => {
-    // Mock export functionality
+    const userRole = userProfile?.user_role || 'user';
+    const reportName = `${reportType}_${userRole}_${new Date().toISOString().split('T')[0]}`;
+    
     toast({
       title: "Export Started",
       description: `${reportType} report is being exported to Excel...`,
     });
     
-    // Simulate download
-    setTimeout(() => {
-      toast({
-        title: "Export Complete",
-        description: `${reportType} report has been downloaded successfully.`,
+    // Create CSV content based on selected report and user role
+    let csvContent = '';
+    const data = reportData;
+    
+    if (selectedReport === 'tat' && data) {
+      csvContent = `TAT Report - ${userProfile?.full_name || 'User'}\n`;
+      csvContent += `Generated: ${new Date().toLocaleString()}\n\n`;
+      csvContent += `Metric,Count\n`;
+      csvContent += `Total Submitted,${data.tatReport.submitted}\n`;
+      csvContent += `Total Due,${data.tatReport.due}\n`;
+      csvContent += `On Time,${data.tatReport.onTime}\n`;
+      csvContent += `Overdue,${data.tatReport.overdue}\n`;
+    } else if (selectedReport === 'department' && data) {
+      csvContent = `Department Status Report\n`;
+      csvContent += `Department,Total,Completed,Pending,Overdue\n`;
+      data.departmentStatus.forEach(dept => {
+        csvContent += `${dept.department},${dept.total},${dept.completed},${dept.pending},${dept.overdue}\n`;
       });
-    }, 2000);
+    }
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${reportName}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Export Complete",
+      description: `${reportType} report has been downloaded successfully.`,
+    });
   };
 
   const exportToPDF = (reportType: string) => {
-    // Mock export functionality
+    const userRole = userProfile?.user_role || 'user';
+    
     toast({
       title: "PDF Export Started",
       description: `${reportType} report is being exported to PDF...`,
     });
     
-    // Simulate download
+    // Simulate PDF generation with role-based content
     setTimeout(() => {
       toast({
         title: "PDF Export Complete",
         description: `${reportType} report PDF has been downloaded successfully.`,
       });
     }, 2000);
+  };
+
+  const canExport = () => {
+    const role = userProfile?.role;
+    const userRole = userProfile?.user_role;
+    return role === 'admin' || userRole === 'checker' || userRole === 'maker';
   };
 
   const chartConfig = {
@@ -333,27 +435,35 @@ const ReportEngine = () => {
 
         {/* Report Tabs */}
         <Tabs value={selectedReport} onValueChange={setSelectedReport}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="tat">TAT Report</TabsTrigger>
-            <TabsTrigger value="department">Department Status</TabsTrigger>
-            <TabsTrigger value="performance">Employee Performance</TabsTrigger>
-            <TabsTrigger value="escalation">Escalation Summary</TabsTrigger>
+          <TabsList className={`grid-auto grid-cols-${Math.min(availableReports.length, 6)}`}>
+            {availableReports.map(report => (
+              <TabsTrigger key={report.key} value={report.key}>
+                <report.icon className="h-4 w-4 mr-2" />
+                {report.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           {/* TAT Report */}
           <TabsContent value="tat" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-2xl font-semibold">Turn Around Time (TAT) Report</h3>
-              <div className="flex gap-2">
-                <Button onClick={() => exportToExcel("TAT")} variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Excel
-                </Button>
-                <Button onClick={() => exportToPDF("TAT")} variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  PDF
-                </Button>
-              </div>
+              <h3 className="text-2xl font-semibold">
+                {userProfile?.user_role === 'maker' || userProfile?.user_role === 'checker' 
+                  ? `My Turn Around Time (TAT) Report` 
+                  : 'Turn Around Time (TAT) Report'}
+              </h3>
+              {canExport() && (
+                <div className="flex gap-2">
+                  <Button onClick={() => exportToExcel("TAT")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Excel
+                  </Button>
+                  <Button onClick={() => exportToPDF("TAT")} variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -425,17 +535,23 @@ const ReportEngine = () => {
           {/* Department Status Report */}
           <TabsContent value="department" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-2xl font-semibold">Department-wise Compliance Status</h3>
-              <div className="flex gap-2">
-                <Button onClick={() => exportToExcel("Department Status")} variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Excel
-                </Button>
-                <Button onClick={() => exportToPDF("Department Status")} variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  PDF
-                </Button>
-              </div>
+              <h3 className="text-2xl font-semibold">
+                {userProfile?.department_code && userProfile?.role !== 'admin' 
+                  ? `${userProfile.department_code} Department Compliance Status`
+                  : 'Department-wise Compliance Status'}
+              </h3>
+              {canExport() && (
+                <div className="flex gap-2">
+                  <Button onClick={() => exportToExcel("Department Status")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Excel
+                  </Button>
+                  <Button onClick={() => exportToPDF("Department Status")} variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Card>
@@ -641,6 +757,161 @@ const ReportEngine = () => {
                     ))}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Maker Assignments Report */}
+          <TabsContent value="maker-assignments" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-semibold">My Assignments</h3>
+              {canExport() && (
+                <div className="flex gap-2">
+                  <Button onClick={() => exportToExcel("My Assignments")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Excel
+                  </Button>
+                  <Button onClick={() => exportToPDF("My Assignments")} variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>My Assignment Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{reportData?.tatReport.due}</div>
+                    <div className="text-sm text-slate-600">Total Assigned</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{reportData?.tatReport.submitted}</div>
+                    <div className="text-sm text-slate-600">Submitted</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-yellow-600">{(reportData?.tatReport.due || 0) - (reportData?.tatReport.submitted || 0)}</div>
+                    <div className="text-sm text-slate-600">Pending</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">{reportData?.tatReport.overdue}</div>
+                    <div className="text-sm text-slate-600">Overdue</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Checker Assignments Report */}
+          <TabsContent value="checker-assignments" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-semibold">My Checker Assignments</h3>
+              {canExport() && (
+                <div className="flex gap-2">
+                  <Button onClick={() => exportToExcel("Checker Assignments")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Excel
+                  </Button>
+                  <Button onClick={() => exportToPDF("Checker Assignments")} variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Checker Tasks</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                  <p className="text-slate-600">Items pending your review will appear here</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Compliance Officer Report */}
+          <TabsContent value="compliance-officer" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-semibold">Compliance Overview</h3>
+              {canExport() && (
+                <div className="flex gap-2">
+                  <Button onClick={() => exportToExcel("Compliance Overview")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Excel
+                  </Button>
+                  <Button onClick={() => exportToPDF("Compliance Overview")} variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-slate-600">Total Compliance Items</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-teal-600">{reportData?.tatReport.due}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-slate-600">Compliance Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {reportData?.tatReport.due ? ((reportData.tatReport.submitted / reportData.tatReport.due) * 100).toFixed(1) : 0}%
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-slate-600">Risk Items</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{reportData?.tatReport.overdue}</div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Audit Trail Report */}
+          <TabsContent value="audit" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-semibold">Audit Trail</h3>
+              {canExport() && (
+                <div className="flex gap-2">
+                  <Button onClick={() => exportToExcel("Audit Trail")} variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Excel
+                  </Button>
+                  <Button onClick={() => exportToPDF("Audit Trail")} variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Calendar className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+                  <p className="text-slate-600">Audit trail data will appear here</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
